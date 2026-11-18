@@ -1,6 +1,6 @@
 # Froebel Academy · Pizarra en vivo
 
-Nuevo alcance por etapas: **E1 (andamiaje)**. Las reglas nuevas del protocolo y de la sala se desarrollarán en E2–E8, cada una con aprobación y commit. Estado y pruebas en [docs/E1.md](docs/E1.md).
+Nuevo alcance por etapas: **E1 y E2 preparadas y probadas localmente**. El nuevo contrato v1 está definido; su activación en Room se hará en E3. Cada etapa requiere aprobación y commit. Pruebas y límites en [docs/E2.md](docs/E2.md).
 
 ## Desarrollo local
 
@@ -17,6 +17,7 @@ Páginas: `/profesor/`, `/alumno/`, `/boards/prueba/`. Se conservan las rutas an
 ## Comprobaciones
 
 - `npm run build`: TypeScript de frontend, herramientas y workspace del Worker; build multipágina y aliases públicos.
+- `npm run test:e2`: validadores v1, Registry SQLite, cuotas, alarmas y migración; Vitest + pool de Cloudflare local.
 - `npm run test:scaffold`: descubrimiento de páginas y salidas de compilación.
 - `npm run test:e1`: Wrangler local, recursos estáticos, prioridad de API, proxy HTTP/WebSocket y navegador.
 - `npm run worker:check`: empaquetado sin despliegue.

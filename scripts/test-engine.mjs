@@ -3,9 +3,9 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
-for(const file of ['shared/protocol','live/engine']){
+for(const file of ['boards/manifest','shared/messages','shared/protocol','live/engine']){
   const out=`.live-test/unit/${file}.js`;mkdirSync(resolve(out,'..'),{recursive:true});
-  const text=ts.transpileModule(readFileSync(`src/${file}.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replace("'../shared/protocol'","'../shared/protocol.js'");writeFileSync(out,text);
+  const text=ts.transpileModule(readFileSync(`src/${file}.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replace("'../shared/protocol'","'../shared/protocol.js'").replace("'../boards/manifest'","'../boards/manifest.js'").replace("'./messages'","'./messages.js'");writeFileSync(out,text);
 }
 const {RoomEngine}=await import(pathToFileURL(resolve('.live-test/unit/live/engine.js')));
 const {emptyState,applyOp}=await import(pathToFileURL(resolve('.live-test/unit/shared/protocol.js')));

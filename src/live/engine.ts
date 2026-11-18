@@ -1,8 +1,8 @@
-import { applyOp, clone, emptyState, type BoardState, type Op } from '../shared/protocol';
+import { applyOp, clone, emptyState, type BoardState, type LegacyOp } from '../shared/protocol';
 import type { BoardAdapter } from './BoardAdapter';
 const equal=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
-export function differences(before:BoardState,after:BoardState,author:string,localKeys:string[]=[]):Op[]{
-  const ops:Op[]=[];const emit=(op:Omit<Op,'opId'|'author'>)=>ops.push({...op,author,opId:`${author}:${crypto.randomUUID()}`});
+export function differences(before:BoardState,after:BoardState,author:string,localKeys:string[]=[]):LegacyOp[]{
+  const ops:LegacyOp[]=[];const emit=(op:Omit<LegacyOp,'opId'|'author'>)=>ops.push({...op,author,opId:`${author}:${crypto.randomUUID()}`});
   for(const [id,item] of Object.entries(after.items)){
     if(!before.items[id])emit({kind:'add',id,patch:clone(item)});
     else {const patch=Object.fromEntries(Object.keys({...before.items[id],...item}).filter(k=>!equal(before.items[id][k],item[k])).map(k=>[k,item[k]??null]));if(Object.keys(patch).length)emit({kind:'update',id,patch});}
@@ -14,8 +14,8 @@ export function differences(before:BoardState,after:BoardState,author:string,loc
 }
 type History={before:BoardState;after:BoardState};
 export class RoomEngine {
-  author=''; private canonical=emptyState();private observed=emptyState();private pending:Op[]=[];private undoStack:History[]=[];private actionBefore:BoardState|null=null;private timer:ReturnType<typeof setTimeout>|undefined;private unsubscribe:()=>void;private seq=0;
-  constructor(private adapter:BoardAdapter,private send:(ops:Op[])=>void){this.observed=clone(adapter.getState());this.unsubscribe=adapter.onChange(final=>this.local(final!==false));}
+  author=''; private canonical=emptyState();private observed=emptyState();private pending:LegacyOp[]=[];private undoStack:History[]=[];private actionBefore:BoardState|null=null;private timer:ReturnType<typeof setTimeout>|undefined;private unsubscribe:()=>void;private seq=0;
+  constructor(private adapter:BoardAdapter,private send:(ops:LegacyOp[])=>void){this.observed=clone(adapter.getState());this.unsubscribe=adapter.onChange(final=>this.local(final!==false));}
   identity(author:string){this.author=author;}
   private local(final:boolean){
     if(!this.author)return;
@@ -25,7 +25,7 @@ export class RoomEngine {
   }
   private flush(){const next=clone(this.adapter.getState()),ops=differences(this.observed,next,this.author,this.adapter.localKeys);this.observed=next;if(ops.length){this.pending.push(...ops);this.send(ops);}}
   snapshot(state:BoardState,seq:number){this.canonical=clone(state);this.seq=seq;this.paint();}
-  receive(ops:Op[]){for(const op of ops){this.pending=this.pending.filter(p=>p.opId!==op.opId);if((op.seq||0)>this.seq){applyOp(this.canonical,op);if(this.actionBefore&&op.author!==this.author)applyOp(this.actionBefore,op);this.seq=op.seq!;}}this.paint();}
+  receive(ops:LegacyOp[]){for(const op of ops){this.pending=this.pending.filter(p=>p.opId!==op.opId);if((op.seq||0)>this.seq){applyOp(this.canonical,op);if(this.actionBefore&&op.author!==this.author)applyOp(this.actionBefore,op);this.seq=op.seq!;}}this.paint();}
   ignored(ids:string[]){this.pending=this.pending.filter(op=>!ids.includes(op.opId));this.paint();}
   resend(){if(this.pending.length)this.send(this.pending);}
   private paint(){

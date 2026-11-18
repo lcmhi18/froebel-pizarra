@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { RoomEngine } from './engine';
 import type { BoardAdapter } from './BoardAdapter';
-import type { Student, Op } from '../shared/protocol';
+import type { Student, LegacyOp } from '../shared/protocol';
 export const API=(import.meta.env.VITE_ROOM_API_URL || '').replace(/\/$/,'');
 export type RoomOptions={code:string;role:'teacher'|'student';name?:string;teacherToken?:string};
 export const messages:Record<string,string>={ROOM_FULL:'La sala ya tiene 5 alumnos activos.',REMOVED:'El profesor te retiró.',REJECTED:'El profesor rechazó tu solicitud.',ROOM_CLOSED:'El profesor cerró la sala.',NOT_FOUND:'La sala no existe.',UNAUTHORIZED:'No se pudo validar tu acceso.',FORBIDDEN:'Solo el profesor puede realizar esta acción.',RATE_LIMIT:'Demasiados cambios. Sincronizando de nuevo…',MESSAGE_TOO_LARGE:'El cambio es demasiado grande.',WAITING_APPROVAL:'Espera la aceptación del profesor.'};
@@ -14,14 +14,14 @@ export function useRoom(adapter:BoardAdapter,options:RoomOptions|null){
     let stopped=false,reconnect:ReturnType<typeof setTimeout>,heartbeat:ReturnType<typeof setInterval>,lastPong=Date.now(),ready=false;
     const {code,role}=options;
     const chunks=new Map<string,{total:number;parts:string[]}>();
-    const outgoing=new Map<string,Op>();
-    const sendOps=(ops:Op[])=>{
+    const outgoing=new Map<string,LegacyOp>();
+    const sendOps=(ops:LegacyOp[])=>{
       if(!ready||socket.current?.readyState!==WebSocket.OPEN)return;
       ops.forEach(op=>outgoing.set(op.opId,op));
     };
     const pump=setInterval(()=>{
       if(!ready||socket.current?.readyState!==WebSocket.OPEN)return;
-      const batch:Op[]=[];
+      const batch:LegacyOp[]=[];
       for(const op of outgoing.values()){
         if(new TextEncoder().encode(JSON.stringify({type:'ops',ops:[...batch,op]})).length>64000){if(!batch.length){outgoing.delete(op.opId);engine.current?.ignored([op.opId]);setError(messages.MESSAGE_TOO_LARGE);}break;}
         batch.push(op);if(batch.length>=2)break;

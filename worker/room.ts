@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import { applyOp, emptyState, validOp, hash, matches, randomToken, json, type Env, type Op, type BoardState, type Student } from './protocol';
+import { applyOp, emptyState, validOp, hash, matches, randomToken, json, type Env, type LegacyOp, type BoardState, type Student } from './protocol';
 type Attachment = { role:'teacher'|'student'; ready:boolean; id:string; window:number; count:number };
 type Meta = {code:string; room:string; teacher_token_hash:string; closed:number; created_at:number};
 export class Room extends DurableObject<Env> {
@@ -100,10 +100,10 @@ export class Room extends DurableObject<Env> {
     a.count+=m.ops.length;ws.serializeAttachment(a);
     if(a.count>60){this.send(ws,{type:'error',error:'RATE_LIMIT',opIds:m.ops.map((op:any)=>op?.opId)});return;}
     if(!m.ops.every(validOp)){this.error(ws,'INVALID_OP');this.snapshot(ws);return;}
-    const {state,seq:initial}=this.load();let seq=initial;const accepted:Op[]=[];const ignored:string[]=[];
+    const {state,seq:initial}=this.load();let seq=initial;const accepted:LegacyOp[]=[];const ignored:string[]=[];
     try { this.ctx.storage.transactionSync(()=>{
-      for(const input of m.ops as Op[]){
-        const op:Op={...input,author:a.id};
+      for(const input of m.ops as LegacyOp[]){
+        const op:LegacyOp={...input,author:a.id};
         if(!op.opId.startsWith(`${a.id}:`)||this.sql.exec('SELECT seq FROM ops WHERE op_id=?',op.opId).toArray().length){ignored.push(op.opId);continue;}
         if((op.kind==='update'&& !state.items[op.id!]) || (op.kind==='add'&&(!op.id!.startsWith(`${a.id}:`) || !!state.items[op.id!]))){ignored.push(op.opId);continue;}
         op.seq=++seq;applyOp(state,op);
@@ -112,7 +112,7 @@ export class Room extends DurableObject<Env> {
       }
       if(Object.keys(state.items).length>2000||new TextEncoder().encode(JSON.stringify(state)).length>2000000)throw Error('BOARD_FULL');
       if(Math.floor(seq/200)>Math.floor(initial/200))this.sql.exec('UPDATE state SET json=?,seq=?',JSON.stringify(state),seq);
-    }); } catch { this.send(ws,{type:'error',error:'BOARD_FULL',opIds:m.ops.map((op:Op)=>op.opId)});return; }
+    }); } catch { this.send(ws,{type:'error',error:'BOARD_FULL',opIds:m.ops.map((op:LegacyOp)=>op.opId)});return; }
     // Send the same ordered operations to every editor, including the author, for canonical reconciliation.
     for(const socket of this.ctx.getWebSockets()){
       const target=this.attachment(socket);if(!target.ready)continue;
