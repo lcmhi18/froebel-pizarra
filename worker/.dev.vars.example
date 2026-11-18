@@ -1,0 +1,2 @@
+# Solo para desarrollo local, nunca publicar esta variable en Cloudflare.
+LOCAL_TEACHER=true

@@ -4,3 +4,10 @@ dist/
 
 .vercel/
 check-*.png
+
+.wrangler/
+.dev.vars
+worker/.dev.vars
+.taste-skill/
+test-results/
+.live-test/

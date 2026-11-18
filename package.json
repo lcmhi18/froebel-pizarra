@@ -4,15 +4,34 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "dev": "vite --host 127.0.0.1 --port 5174",
+    "build": "npm run typecheck && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "typecheck": "tsc -p tsconfig.json && tsc -p worker/tsconfig.json",
+    "worker:dev": "wrangler dev --config worker/wrangler.jsonc --ip 127.0.0.1 --port 8787",
+    "worker:check": "wrangler deploy --dry-run --config worker/wrangler.jsonc",
+    "worker:deploy": "node scripts/deploy-worker.mjs",
+    "test:live": "node scripts/test-live.mjs",
+    "test:engine": "node scripts/test-engine.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.80.0"
+    "@fontsource/nunito": "5.3.0",
+    "@phosphor-icons/react": "2.1.10",
+    "@supabase/supabase-js": "2.80.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router-dom": "7.18.4"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "5.20261113.1",
     "@playwright/test": "1.56.1",
-    "vite": "7.3.8"
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "5.6.3",
+    "vite": "8.3.5",
+    "wrangler": "4.152.0"
+  },
+  "overrides": {
+    "undici": "7.30.1"
   }
 }
