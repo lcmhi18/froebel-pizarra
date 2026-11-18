@@ -9,5 +9,5 @@ export default defineConfig({
     remoteBindings:false,
     miniflare:{bindings:{LOCAL_TEACHER:'true'}},
   })],
-  test:{include:['tests/e2/**/*.test.ts','tests/e3/**/*.test.ts'],testTimeout:15000,hookTimeout:15000,fileParallelism:false},
+  test:{include:['tests/e2/**/*.test.ts','tests/e3/**/*.test.ts','tests/e4/**/*.test.ts'],testTimeout:15000,hookTimeout:15000,fileParallelism:false},
 });
