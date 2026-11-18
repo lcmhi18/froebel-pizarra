@@ -1,3 +1,4 @@
+import { WebSocket } from 'undici';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile, unlink } from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -49,21 +50,21 @@ try {
   assert.equal(shadow.status, 404);
   assert.deepEqual(await shadow.json(), { error: 'NOT_FOUND' });
 
-  const created = await fetch('http://127.0.0.1:5193/api/rooms', { method: 'POST' });
+  const created = await fetch('http://127.0.0.1:5193/api/rooms', { method: 'POST', headers:{Origin:'http://127.0.0.1:5193'} });
   assert.equal(created.status, 200, 'Vite HTTP proxy');
   const { code, teacherToken } = await created.json();
-  const ws = new WebSocket(`ws://127.0.0.1:5193/api/rooms/${code}/ws?role=teacher`);
+  const ws = new WebSocket(`ws://127.0.0.1:5193/api/rooms/${code}/ws?role=teacher`,{headers:{Origin:'http://127.0.0.1:5193'}});
   sockets.push(ws);
   await new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(Error('WebSocket proxy timeout')), 10000);
-    ws.addEventListener('open', () => ws.send(JSON.stringify({ type: 'auth', teacherToken })));
+    ws.addEventListener('open', () => ws.send(JSON.stringify({ type: 'hello', v:1, role:'teacher', token:teacherToken })));
     ws.addEventListener('error', () => { clearTimeout(timer); reject(Error('WebSocket proxy failed')); });
     ws.addEventListener('message', event => {
       const message = JSON.parse(event.data);
-      if (message.type === 'snapshot') { clearTimeout(timer); resolve(); }
+      if (message.type === 'snapshot_end') { clearTimeout(timer); resolve(); }
     });
   });
-  ws.send(JSON.stringify({ type: 'close' }));
+  ws.send(JSON.stringify({ type: 'close_room' }));
   console.log('PASS E1 HTTP: static HTML/assets and clean URLs from Wrangler; API priority; Vite HTTP + WebSocket proxy.');
 
   browser = await chromium.launch({ channel: 'msedge', headless: true });
@@ -77,6 +78,21 @@ try {
     await page.goto(`${origin}/alumno/`);
     await page.getByRole('heading', { name: 'Entra a tu clase.', exact: true }).waitFor();
   }
+
+  const createdBuilt=await fetch('http://127.0.0.1:8787/api/rooms',{method:'POST',headers:{Origin:'http://127.0.0.1:8787','CF-Connecting-IP':'203.0.113.99'}});
+  const built=await createdBuilt.json();assert.equal(createdBuilt.status,200);
+  await page.goto('http://127.0.0.1:8787/profesor/');
+  await page.evaluate(data=>localStorage.setItem('room:'+data.code+':teacher',data.teacherToken),built);
+  await page.goto('http://127.0.0.1:8787/profesor/?code='+built.code);
+  await page.locator('svg[aria-label^="Lienzo"]').waitFor();
+  const student=await browser.newPage();student.on('pageerror',e=>errors.push(e.message));student.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+  await student.goto('http://127.0.0.1:8787/alumno/?code='+built.code);
+  await student.getByPlaceholder('¿Cómo te llamas?').fill('Prueba');await student.getByRole('button',{name:'Pedir entrada',exact:true}).click();
+  await page.getByLabel('Aceptar a Prueba',{exact:true}).click();await student.locator('svg[aria-label^="Lienzo"]').waitFor();
+  await page.getByRole('button',{name:'Círculo',exact:true}).click();await page.locator('svg[aria-label^="Lienzo"]').click({position:{x:150,y:150}});await student.locator('circle[data-item]').waitFor();
+  const secured=await fetch('http://127.0.0.1:8787/profesor/');assert.match(secured.headers.get('Content-Security-Policy'),/script-src 'self'/);
+  assert.match(secured.headers.get('Content-Security-Policy'),/object-src 'none'/);
+  console.log('PASS built Worker: teacher/student approval and drawing under enforced CSP.');
   assert.deepEqual(errors, []);
   console.log('PASS E1 browser: professor/student render on built Worker and Vite clean routes; no console errors.');
 } catch (error) {

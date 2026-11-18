@@ -1,0 +1,4 @@
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://zlcpyrisqigmfayufmnm.supabase.co wss://zlcpyrisqigmfayufmnm.supabase.co https://academy-profesor-api.fatimamendo7.workers.dev wss://academy-profesor-api.fatimamendo7.workers.dev; object-src 'none'; base-uri 'none'; frame-ancestors 'self'; form-action 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer

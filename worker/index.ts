@@ -1,4 +1,4 @@
-import { json, randomToken, hash, type Env } from './protocol';
+import { json, randomToken, hash, isBoardId, API_HEADERS, type Env } from './protocol';
 export { Registry } from './registry';
 export { Room } from './room';
 export default {
@@ -8,8 +8,8 @@ export default {
       return env.ASSETS.fetch(req);
     }
     const allowed = env.ALLOWED_ORIGINS.split(',').map(s=>s.trim());
-    if (origin && !allowed.includes(origin)) return json({error:'ORIGIN_DENIED'},403);
-    const cors = { 'Access-Control-Allow-Origin': origin || allowed[0], 'Access-Control-Allow-Headers':'Authorization, Content-Type', 'Access-Control-Allow-Methods':'GET,POST,OPTIONS', Vary:'Origin' };
+    if ((origin && !allowed.includes(origin)) || ((!origin) && (req.method==='POST'||req.headers.get('Upgrade')?.toLowerCase()==='websocket'))) return json({error:'ORIGIN_DENIED'},403);
+    const cors = { ...API_HEADERS,'Access-Control-Allow-Origin': origin || allowed[0], 'Access-Control-Allow-Headers':'Authorization, Content-Type', 'Access-Control-Allow-Methods':'GET,POST,OPTIONS', Vary:'Origin' };
     if(req.method === 'OPTIONS') return new Response(null,{headers:cors});
     const registry = env.REGISTRY.get(env.REGISTRY.idFromName('registry'));
     const client = async () => {
@@ -22,6 +22,8 @@ export default {
     let response: Response;
     try {
       if(url.pathname === '/api/rooms' && req.method === 'POST') {
+        let boardId='prueba';
+        try{const text=await req.text();if(new TextEncoder().encode(text).length>1024)throw Error();const body=text?JSON.parse(text):{};if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(k=>k!=='boardId'))throw Error();if(body.boardId!==undefined){if(!isBoardId(body.boardId))return json({error:'UNKNOWN_BOARD'},400);boardId=body.boardId;}}catch{return json({error:'BAD_MESSAGE'},400);}
         const ipHash=await client();
         if(!(await env.ROOM_RATE_LIMITER.limit({key:`create:${ipHash}`})).success) return new Response(JSON.stringify({error:'RATE_LIMITED'}),{status:429,headers:{...cors,'Content-Type':'application/json','Retry-After':'60'}});
         const local = ['localhost','127.0.0.1'].includes(url.hostname) && env.LOCAL_TEACHER === 'true';
@@ -38,7 +40,8 @@ export default {
         if(!allocation.ok) return new Response(allocation.body,{status:allocation.status,headers:{...cors,'Content-Type':'application/json','Retry-After':allocation.headers.get('Retry-After')||'60'}});
         const {code,room} = await allocation.json() as {code:string;room:string};
         const teacherToken = randomToken();
-        await env.ROOM.get(env.ROOM.idFromName(room)).fetch('https://room/init',{method:'POST',body:JSON.stringify({code,room,teacherHash:await hash(teacherToken)})});
+        const initialized=await env.ROOM.get(env.ROOM.idFromName(room)).fetch('https://room/init',{method:'POST',body:JSON.stringify({code,room,teacherHash:await hash(teacherToken),boardId})});
+        if(!initialized.ok)throw Error('INIT_FAILED');
         response = json({code,teacherToken});
       } else {
         const match = url.pathname.match(/^\/api\/rooms\/([23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6})(\/ws|\/reopen)?$/);
@@ -49,8 +52,11 @@ export default {
           const found = await registry.fetch('https://registry/lookup',{method:'POST',body:JSON.stringify({code:match[1],ipHash})});
           if(!found.ok)return new Response(found.body,{status:found.status,headers:{...cors,'Content-Type':'application/json','Retry-After':found.headers.get('Retry-After')||'60'}});
           const {room} = await found.json() as {room?:string};
-          if(!room) response = json({error:'NOT_FOUND'},404);
-          else response = await env.ROOM.get(env.ROOM.idFromName(room)).fetch(req);
+          if(!room) response = !match[2]&&req.method==='GET'?json({open:false}):json({error:'NOT_FOUND'},404);
+          else {
+            const trusted=new Request(req);trusted.headers.set('X-Room-Client-IP-Hash',ipHash);
+            response = await env.ROOM.get(env.ROOM.idFromName(room)).fetch(trusted);
+          }
         }
       }
     } catch { response = json({error:'SERVER_ERROR'},500); }

@@ -1,6 +1,6 @@
 export type Item = Record<string, unknown>;
 export type BoardState = { items: Record<string, Item>; order: string[]; fields: Record<string, unknown> };
-/** Transitional format for the pre-v1 Room/engine. Replaced in E3/E4, never a v1 frame. */
+/** Transitional UI engine/migration format. The E3 transport converts it; never a v1 frame. */
 export type LegacyOp = { opId: string; author: string; seq?: number; kind: 'add'|'update'|'remove'|'order'|'field'; id?: string; patch?: Item; field?: string; value?: unknown };
 export type Student = { id: string; name: string; status: 'pending'|'active'|'removed'; last_seen: number };
 export const emptyState = (): BoardState => ({ items: {}, order: [], fields: {} });
@@ -24,5 +24,5 @@ export function validOp(x: unknown): x is LegacyOp {
   return ['add','update'].includes(o.kind) && !!o.patch && typeof o.patch === 'object' && !Array.isArray(o.patch) && Object.keys(o.patch).every(safeKey);
 }
 
-// Protocol v1 is defined separately while the old room is migrated in E3/E4.
+// Wire protocol v1; the UI engine migration continues in E4.
 export * from './messages';
