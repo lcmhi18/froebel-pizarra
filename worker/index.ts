@@ -4,6 +4,9 @@ export { Room } from './room';
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url), origin = req.headers.get('Origin');
+    if (url.pathname !== '/api' && !url.pathname.startsWith('/api/')) {
+      return env.ASSETS.fetch(req);
+    }
     const allowed = env.ALLOWED_ORIGINS.split(',').map(s=>s.trim());
     if (origin && !allowed.includes(origin)) return json({error:'ORIGIN_DENIED'},403);
     const cors = { 'Access-Control-Allow-Origin': origin || allowed[0], 'Access-Control-Allow-Headers':'Authorization, Content-Type', 'Access-Control-Allow-Methods':'GET,POST,OPTIONS', Vary:'Origin' };

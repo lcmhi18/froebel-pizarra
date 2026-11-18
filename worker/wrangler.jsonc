@@ -25,9 +25,19 @@
     }
   ],
   "vars": {
-    "ALLOWED_ORIGINS": "http://127.0.0.1:5174,http://localhost:5174,https://froebel-pizarra.vercel.app",
+    "ALLOWED_ORIGINS": "http://127.0.0.1:5174,http://localhost:5174,http://127.0.0.1:8787,http://localhost:8787,https://froebel-pizarra.vercel.app,https://academy-profesor-api.fatimamendo7.workers.dev",
     "SUPABASE_URL": "https://zlcpyrisqigmfayufmnm.supabase.co",
-    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_5D9suBV2W7Ase1oQ_gzm7A_nE8o5pek"
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_5D9suBV2W7Ase1oQ_gzm7A_nE8o5pek",
+    "RETENTION_HOURS": "24"
   },
-  "account_id": "373df7d753c05ace8818906faae9377f"
+  "account_id": "373df7d753c05ace8818906faae9377f",
+  "assets": {
+    "directory": "../dist",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api",
+      "/api/*"
+    ],
+    "not_found_handling": "404-page"
+  }
 }

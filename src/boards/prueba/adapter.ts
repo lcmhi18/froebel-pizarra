@@ -1,4 +1,4 @@
-import { applyOp, clone, emptyState, type BoardState, type Op } from '../../shared/protocol';
+import { applyOp, clone, emptyState, type BoardState, type Op } from '@shared/protocol';
 import type { BoardAdapter } from '../../live/BoardAdapter';
 export class TestBoardAdapter implements BoardAdapter {
   localKeys=['tool','color','selection','magnet','largeBoard','hideOptions','tab'];
