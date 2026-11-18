@@ -11,3 +11,5 @@ worker/.dev.vars
 .taste-skill/
 test-results/
 .live-test/
+
+.course-test/

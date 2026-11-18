@@ -1,6 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 import './login.css';
 import './style.css';
+import primaryDesktop from './assets/img/cursos/primaria-desktop.webp';
+import secondaryDesktop from './assets/img/cursos/secundaria-desktop.webp';
+import primaryTitle from './assets/img/cursos/primaria-titulo.webp';
+import secondaryTitle from './assets/img/cursos/secundaria-titulo.webp';
+import primaryGeometry from './assets/img/cursos/primaria-geometria.webp';
+import secondaryGeometry from './assets/img/cursos/secundaria-geometria.webp';
+import primaryArithmetic from './assets/img/cursos/primaria-aritmetica.webp';
+import secondaryArithmetic from './assets/img/cursos/secundaria-aritmetica.webp';
+import courseHeader from './assets/img/cursos/header.webp';
+import homeHeader from './assets/img/header.webp';
+const courseAssets = {
+  primaria: { name: 'Primaria', desktop: primaryDesktop, title: primaryTitle, geometry: primaryGeometry, arithmetic: primaryArithmetic },
+  secundaria: { name: 'Secundaria', desktop: secondaryDesktop, title: secondaryTitle, geometry: secondaryGeometry, arithmetic: secondaryArithmetic },
+};
+let currentLevel = 'primaria';
 const $ = (selector) => document.querySelector(selector);
 const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
 let authenticated = false;
@@ -91,19 +106,42 @@ function showHome(view) {
   if (!authenticated) return;
   $('#home-screen').hidden = false;
   $('#level-screen').hidden = true;
+  $('#subject-screen').hidden = true;
+  $('#student-panel').classList.remove('course-open');
+  $('#panel-header-image').src = homeHeader;
   document.querySelectorAll('[data-view]').forEach(button => {
     if(button.dataset.view === view) button.setAttribute('aria-current', 'page');
     else button.removeAttribute('aria-current');
   });
 }
 document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => showHome(button.dataset.view)));
-document.querySelectorAll('[data-level]').forEach(button => button.addEventListener('click', () => {
+function showLevel(level) {
   if (!authenticated) return;
+  currentLevel = level;
+  const assets = courseAssets[level];
   $('#home-screen').hidden = true;
+  $('#subject-screen').hidden = true;
   $('#level-screen').hidden = false;
-  $('#level-title').textContent = `Matemáticas · ${button.dataset.level === 'primaria' ? 'Primaria' : 'Secundaria'}`;
+  $('#student-panel').classList.add('course-open');
+  $('#panel-header-image').src = courseHeader;
+  $('#level-title').textContent = assets.name;
+  $('#level-desktop-image').src = assets.desktop;
+  $('#level-mobile-title').src = assets.title;
+  $('#geometry-image').src = assets.geometry;
+  $('#arithmetic-image').src = assets.arithmetic;
+  $('.geometry-choice').setAttribute('aria-label', `Geometría · ${assets.name}`);
+  $('.arithmetic-choice').setAttribute('aria-label', `Aritmética · ${assets.name}`);
   $('#level-title').focus();
+}
+document.querySelectorAll('[data-level]').forEach(button => button.addEventListener('click', () => showLevel(button.dataset.level)));
+document.querySelectorAll('[data-subject]').forEach(button => button.addEventListener('click', () => {
+  if (!authenticated) return;
+  $('#level-screen').hidden = true;
+  $('#subject-screen').hidden = false;
+  $('#subject-title').textContent = `${button.dataset.subject === 'geometria' ? 'Geometría' : 'Aritmética'} · ${courseAssets[currentLevel].name}`;
+  $('#subject-title').focus();
 }));
+$('#subject-back').addEventListener('click', () => showLevel(currentLevel));
 $('#back').addEventListener('click', () => showHome('courses'));
 $('#notifications').addEventListener('click', () => {
   const open = $('#notification-panel').hidden;

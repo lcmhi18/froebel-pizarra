@@ -51,3 +51,6 @@ Probado localmente: pendientes sin snapshot, mensajes de moderación manipulados
 No comprobado todavía: las nueve pizarras reales, integración con `app/`, corte físico de red en varios dispositivos, expulsión real del runtime por hibernación, liberación transcurridas 24 horas reales y carga prolongada. Las pruebas locales de creación usan el bypass explícito; falta verificar crear sala con una cuenta docente real en producción.
 
 Referencia de arquitectura: [SQLite de Durable Objects](https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/) y [WebSockets con hibernación](https://developers.cloudflare.com/durable-objects/best-practices/websockets/).
+
+## Pantallas de cursos
+Primaria y Secundaria reutilizan los dos diseños suministrados en src/assets/img/cursos. En móvil se apilan Geometría y Aritmética. Para comprobar navegación, imágenes y consola: node scripts/test-courses.mjs. Detalle de fidelidad en design-qa.md.
