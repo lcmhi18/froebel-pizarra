@@ -166,7 +166,7 @@ export class Room extends DurableObject<Env>{
       a.role='student';a.studentId=s.id;a.authed=true;
     }
     ws.serializeAttachment(a);this.sql.exec('INSERT INTO sessions VALUES(?,?,?)',a.socketId,a.role,a.studentId||null);this.sql.exec('DELETE FROM auth_deadlines WHERE socket_id=?',a.socketId);
-    const s=this.student(a.studentId);this.send(ws,{type:'joined',...(s?{studentId:s.id}:{}),status:s?.status||'active',author:s?.author||'teacher'});
+    const s=this.student(a.studentId);this.send(ws,{type:'joined',...(s?{studentId:s.id,name:s.name}:{}),status:s?.status||'active',author:s?.author||'teacher'});
     if(s?.status==='pending')this.send(ws,{type:'waiting'});else this.snapshot(ws);
     if(a.role==='teacher')this.eachEditor(socket=>this.send(socket,{type:'resumed'}));
     this.roster();await this.schedule();

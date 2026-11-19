@@ -29,7 +29,7 @@ export type ClientMessage =
   | {type:'close_room'|'teacher_leaving'};
 export type RosterEntry = {studentId:string;name:string};
 export type ServerMessage =
-  | {type:'joined';studentId?:string;status:'pending'|'active';author:string}
+  | {type:'joined';studentId?:string;name?:string;status:'pending'|'active';author:string}
   | {type:'waiting'}
   | {type:'roster';pending:RosterEntry[];active:RosterEntry[];count:number}
   | {type:'snapshot_start';snapshotId:string;boardId:BoardId;seq:number;chunks:number}

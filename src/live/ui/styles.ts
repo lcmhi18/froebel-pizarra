@@ -1,0 +1,10 @@
+import font from '@fontsource/nunito/files/nunito-latin-600-normal.woff2?url';
+export function roomFont(){
+ if(document.getElementById('froebel-room-font'))return;
+ const style=document.createElement('style');style.id='froebel-room-font';style.textContent=`@font-face{font-family:FroebelRoom;src:url("${font}") format("woff2");font-style:normal;font-weight:400 900;font-display:swap}`;document.head.append(style);
+}
+export const uiStyle=`
+:host{font-family:FroebelRoom,Arial,sans-serif;color:var(--room-ink,#122653);font-size:15px;line-height:1.5;color-scheme:light;--room-bg:#fff;--room-ink:#122653;--room-muted:#52627c;--room-line:#c9ddf9;--room-blue:#083fe4}
+:host([data-theme=dark]){color-scheme:dark;--room-bg:#17243e;--room-ink:#f1f6ff;--room-muted:#bac9df;--room-line:#3e5376;--room-blue:#86baff}
+*{box-sizing:border-box}button,input{font:inherit}button,a,input{min-height:44px}button{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 12px;border:1px solid var(--room-line);border-radius:12px;background:var(--room-bg);color:var(--room-ink);font-weight:700;cursor:pointer}button:hover{border-color:var(--room-blue);color:var(--room-blue)}button:disabled{opacity:.5;cursor:default}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #f6b900;outline-offset:3px}svg{flex-shrink:0;fill:currentColor}p{margin:8px 0;color:var(--room-muted)}h2{font-size:23px;margin:0}h3{font-size:17px;margin:22px 0 10px}input{width:100%;padding:9px 11px;border:1px solid var(--room-line);border-radius:9px;background:var(--room-bg);color:var(--room-ink)}a{color:var(--room-blue);display:inline-flex;align-items:center}strong{color:var(--room-ink)}.primary{background:#093eda;color:#fff;border-color:#093eda}.primary:hover{background:#032da6;color:#fff}.feedback{font-size:14px;overflow-wrap:anywhere}.danger{color:#c31e35}dialog{color:var(--room-ink);background:var(--room-bg);max-width:360px;border:1px solid var(--room-line);border-radius:16px;padding:24px}dialog::backdrop{background:#0c1b4b88}.dialog-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}[hidden]{display:none!important}
+`;
