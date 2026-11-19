@@ -52,3 +52,14 @@ it('a real teacher disconnect freezes the student engine without losing canonica
   t.ws.close();await waitFor(()=>s.engine.isReadOnly);s.adapter.change(state=>{state.items[id].x=99;});expect(s.adapter.getState().items[id].x).toBe(3);expect(s.engine.pendingCount).toBe(0);
  }finally{t.dispose();s.dispose();}
 });
+
+it('E9 geometry shares polygon vertices, face colors and protractor while undo preserves the other author',async()=>{
+ const {teacher:t,student:s}=await room();
+ try{
+  t.send({type:'set_board',boardId:'geometria'});await waitFor(()=>t.frames.some(m=>m.type==='snapshot_end'&&m.boardId==='geometria')&&s.frames.some(m=>m.type==='snapshot_end'&&m.boardId==='geometria'));
+  const id=s.engine.newId();s.adapter.change(state=>{state.items[id]={id,t:'p',pts:[{x:1,y:2},{x:50,y:80},{x:100,y:2}],c:'#2e8b57'};state.order.push(id);});await waitFor(()=>!!t.adapter.getState().items[id]&&s.engine.pendingCount===0);
+  s.adapter.change(state=>{state.items[id].pts=[{x:10,y:20},{x:50,y:80},{x:100,y:2}];});await waitFor(()=>(t.adapter.getState().items[id].pts as any[])[0].x===10&&s.engine.pendingCount===0);
+  t.adapter.change(state=>{state.items[id].f='#ffe100';state.fields.protractor={on:1,x:500,y:280,r:30,R:200};});await waitFor(()=>s.adapter.getState().items[id].f==='#ffe100'&&t.engine.pendingCount===0);
+  s.engine.undo();await waitFor(()=>(t.adapter.getState().items[id].pts as any[])[0].x===1&&s.engine.pendingCount===0);expect(t.adapter.getState().items[id].f).toBe('#ffe100');expect(s.adapter.getState().fields.protractor).toEqual({on:1,x:500,y:280,r:30,R:200});
+ }finally{t.dispose();s.dispose();}
+});

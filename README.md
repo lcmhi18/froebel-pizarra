@@ -1,6 +1,6 @@
 # Froebel Academy · Pizarra en vivo
 
-**E8: infraestructura verificada localmente.** E1–E6 están implementadas; E7 documenta el límite de integración de Konva. La geometría completa del HTML enviado sigue pendiente de E9/E10. No se afirma que esta pizarra de prueba tenga todas sus opciones. [Alcance](docs/ALCANCE-PIZARRA.md) · [Resultados y limitaciones de E8](docs/E8.md).
+**E9: geometría del HTML incorporada y probada localmente.** La nueva página conserva sus nueve familias y se conecta a la sala. E10 comparará cada opción con el original; todavía no se afirma equivalencia exhaustiva. Konva sigue pendiente según E7. [E9](docs/E9.md) · [Matriz para E10](docs/GEOMETRIA-EQUIVALENCIA.md).
 
 ## Iniciar localmente
 
@@ -12,18 +12,21 @@ Requiere Node 24 o posterior.
 4. Terminal 1: `npm run worker:dev` — Worker y estáticos compilados en `http://127.0.0.1:8787`.
 5. Terminal 2: `npm run dev` — Vite en `http://127.0.0.1:5174`, con proxy HTTP/WebSocket de `/api`.
 
+Si reconstruyes `dist/` con Wrangler ya arrancado, reinicia `worker:dev` para recargar el catálogo de assets y las rutas nuevas.
+
 Profesor: `/profesor/` crea o reabre una sala y elige la pizarra inicial. Alumno: `/alumno/` introduce código y nombre, espera y entra cuando lo aceptan. El panel del profesor permite aceptar, rechazar, expulsar, cerrar y cambiar la pizarra para toda la clase. Máximo cinco alumnos activos y diez pendientes.
 
-Pizarras disponibles: `/boards/prueba/` (círculos, lápiz, texto y edición) y `/boards/_plantilla/` (segunda pizarra mínima). Sin `?room`, funcionan en modo personal en memoria. En sala, el servidor decide la pizarra; cambiar y volver conserva el estado independiente. Se mantienen las rutas antiguas `/src/pages/...` y `/src/boards/...`.
+Pizarras disponibles: `/boards/geometria/` (pizarra completa importada), `/boards/prueba/` (círculos, lápiz, texto y edición) y `/boards/_plantilla/` (segunda pizarra mínima). Sin `?room`, funcionan en modo personal en memoria. En sala, el servidor decide la pizarra; cambiar y volver conserva el estado independiente. Se mantienen las rutas antiguas `/src/pages/...` y `/src/boards/...`.
 
 La creación real requiere la sesión Supabase de un profesor u owner activo en account_access. El botón de prueba solo aparece en desarrollo y requiere LOCAL_TEACHER local. El token del profesor permanece en localStorage y el UUID de alumno en sessionStorage; nunca van en la URL. Una sala cerrada puede reabrirse con su token durante la retención de 24 horas. Las salas recientes corresponden al navegador actual.
 
 ## Verificar
 
-- `npm run test:e8`: build con tipos, 85 pruebas automáticas y simulación local completa de un profesor y seis alumnos. La simulación levanta y detiene su propio Worker en 8791, con datos aislados en `.e8-test/`.
+- `npm run test:e9`: build, 94 pruebas automáticas y simulación local, incluyendo geometría.
+- `npm run test:e8`: build con tipos, 86 pruebas automáticas y simulación local completa de un profesor y seis alumnos. La simulación levanta y detiene su propio Worker en 8791, con datos aislados en `.e8-test/`.
 - `npm run test:sim`: solo esa simulación, sin navegador, servicios remotos ni despliegue.
 - `npm run test:engine`: 24 pruebas del motor, concurrencia y deshacer propio; diff de 500 objetos con límite p95 de 2 ms.
-- `npm run test:e2`: 41 pruebas de protocolo, Registry y Room con SQLite local, incluidas cuotas, alarmas, migración y navegación.
+- `npm run test:e2`: 42 pruebas de protocolo, Registry y Room con SQLite local, incluidas cuotas, alarmas, migración y navegación.
 - `npm run test:e5`: 14 pruebas del transporte. `node scripts/test-navigation.mjs`: 3 de rutas/historial. `npm run test:scaffold`: 3 de compilación/rutas.
 - `npm run worker:check`: empaquetado dry-run, sin desplegar.
 

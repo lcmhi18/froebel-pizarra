@@ -62,3 +62,9 @@ Revisión local por CUA: profesor escritorio y 390 px; alumno 390 px; espera/ace
 ## E8 — Verificación final
 
 CUA, dos pestañas: entrada y aceptación, círculo del alumno, arrastre confirmado por transforms iguales en ambos DOM, deshacer propio que conserva texto del profesor, cambio entre páginas y restauración, cierre y bloqueo. Consola de ambas sin errores ni avisos. Tema oscuro revisado en .e8-test/teacher-dark.jpg. El controlador de arrastre emitió una incidencia tras aplicar el movimiento; se validó el resultado por DOM y Deshacer. No se rediseñaron pantallas. Matriz completa y límites en docs/E8.md.
+
+## E9 — Geometría importada
+
+Referencia seleccionada: imagen 1672×941 enviada por el usuario. Implementación sobre el HTML funcional original, con marca y sistema azul/blanco/amarillo. Se revisaron capturas .e9-test/geometria-desktop.jpg y geometria-mobile.jpg (390×844). En móvil se corrigió el solapamiento de las etiquetas de familias: cada pestaña conserva su ancho y la fila se desplaza internamente. Sin desbordamiento horizontal del documento. Botones y paleta tienen al menos 44 px; los puntos geométricos y otros gestos táctiles deben revisarse en E10.
+
+CUA: creación compartida de triángulo/círculo/cubo, desarrollo del cubo coincidente en ambos clientes, transportador, deshacer de inserción/animación y galería de 51 fórmulas con inserción real. La versión compilada local en 8787 dibuja el triángulo con sus tres 60°, inserta una imagen de fórmula y permite deshacerla bajo CSP. Consola final compilada sin errores ni avisos. No se declara fidelidad pixel por pixel: la ilustración del búho y los iconos 3D de la referencia quedan como diferencia visible. Ver docs/E9.md y GEOMETRIA-EQUIVALENCIA.md.

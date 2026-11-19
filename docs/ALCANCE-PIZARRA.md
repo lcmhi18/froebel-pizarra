@@ -9,8 +9,8 @@ Para este archivo concreto se propone cerrar en diez entregas:
 | E1–E6 | Base, servidor, sincronización, adaptación SVG, entradas y navegación entre dos pizarras mínimas. |
 | E7 | Spike documentado: candidata externa localizada; App completa sin contrato externo de estado. Integración /app-live pendiente de decisión; ver E7.md. |
 | E8 | Verificación local terminada: 85 pruebas y simulación de siete clientes correctas; límites y evidencia en E8.md. |
-| E9 propuesta | Integrar el HTML completo de geometría con el contrato de adaptación y el diseño solicitado, conservando sus funciones. |
-| E10 propuesta | Comparar y probar cada opción del HTML, corregir diferencias y comprobar funcionamiento local y compartido. |
+| E9 | HTML de geometría incorporado como página SVG, conectado a la sala y verificado en recorridos representativos; ver E9.md. |
+| E10 | Comparar y probar cada opción del HTML, corregir diferencias y comprobar funcionamiento local y compartido. |
 
 El usuario aprobó el plan de diez etapas después de E6. E9 y E10 amplían el alcance para la pizarra de geometría enviada; no implican portar automáticamente las otras ocho pizarras. El número de etapas organiza la entrega: la equivalencia solo se declara después de probar el inventario completo.
 

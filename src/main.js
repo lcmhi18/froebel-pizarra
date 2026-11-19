@@ -136,6 +136,7 @@ function showLevel(level) {
 document.querySelectorAll('[data-level]').forEach(button => button.addEventListener('click', () => showLevel(button.dataset.level)));
 document.querySelectorAll('[data-subject]').forEach(button => button.addEventListener('click', () => {
   if (!authenticated) return;
+  if (button.dataset.subject === 'geometria') { location.assign('/boards/geometria/'); return; }
   $('#level-screen').hidden = true;
   $('#subject-screen').hidden = false;
   $('#subject-title').textContent = `${button.dataset.subject === 'geometria' ? 'Geometría' : 'Aritmética'} · ${courseAssets[currentLevel].name}`;

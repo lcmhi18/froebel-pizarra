@@ -4,4 +4,6 @@ export const BOARD_MANIFEST = [
     localKeys: ['tool', 'color', 'selection', 'magnet', 'largeBoard', 'hideOptions', 'tab'], fieldKeys: [] },
   { id: '_plantilla', title: 'Pizarra en blanco', path: '/boards/_plantilla/', engine: 'svg-js',
     localKeys: ['tool', 'color', 'selection', 'magnet', 'largeBoard', 'hideOptions', 'tab'], fieldKeys: [] },
+  { id: 'geometria', title: 'Geometría completa', path: '/boards/geometria/', engine: 'svg-js',
+    localKeys: ['tool','col','sel','sd','snap','tab','hide','ang','largeBoard','hideOptions'], fieldKeys: ['protractor'] },
 ] as const;

@@ -12,7 +12,7 @@ import { boardUrl,forgetRoom,recentRooms,rememberRoom } from '../live/navigation
 function RoomApp(){
  const [query]=useSearchParams(),role=/\/alumno(?:\/|$)/.test(location.pathname)?'student':'teacher';
  const initialCode=(query.get('code')||query.get('room')||'').trim().toUpperCase();
- const [code,setCode]=useState(initialCode),[name,setName]=useState(''),[boardId,setBoardId]=useState<BoardId>('prueba');
+ const [code,setCode]=useState(initialCode),[name,setName]=useState(''),[boardId,setBoardId]=useState<BoardId>(()=>isBoardId(query.get('board'))?query.get('board') as BoardId:'prueba');
  const [options,setOptions]=useState<RoomOptions|null>(()=>role==='student'&&isRoomCode(initialCode)&&sessionStorage.getItem(`room:${initialCode}:student`)?{code:initialCode,role}:null);
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[recent,setRecent]=useState(()=>role==='teacher'?recentRooms():[]);
  const [dark,setDark]=useState(()=>localStorage.getItem('froebel:room-theme')==='dark'||(!localStorage.getItem('froebel:room-theme')&&matchMedia('(prefers-color-scheme:dark)').matches));

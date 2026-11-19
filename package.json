@@ -24,13 +24,16 @@
     "test:e5": "node scripts/test-connection.mjs",
     "test:e6": "node scripts/test-navigation.mjs && npm run test:e5 && npm run test:e2",
     "test:sim": "node scripts/sim.ts",
-    "test:e8": "npm run build && npm run test:engine && node scripts/test-navigation.mjs && npm run test:e5 && npm run test:e2 && npm run test:scaffold && npm run test:sim"
+    "test:e8": "npm run build && npm run test:engine && node scripts/test-navigation.mjs && npm run test:e5 && npm run test:e2 && npm run test:scaffold && npm run test:sim",
+    "test:geometry": "node scripts/test-geometry.mjs",
+    "test:e9": "npm run test:e8 && npm run test:geometry"
   },
   "dependencies": {
     "@fontsource/nunito": "5.3.0",
     "@phosphor-icons/core": "2.1.1",
     "@phosphor-icons/react": "2.1.10",
     "@supabase/supabase-js": "2.80.0",
+    "dompurify": "3.4.18",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-router-dom": "7.18.4"
