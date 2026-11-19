@@ -87,7 +87,7 @@ export class Room extends DurableObject<Env>{
   }
   private async notify(){
     const m=this.meta();if(!m)return;
-    try{const r=await this.env.REGISTRY.get(this.env.REGISTRY.idFromName('registry')).fetch('https://registry/status',{method:'POST',body:JSON.stringify({code:m.code,room:m.room,closed:!!m.closed})});if(!r.ok)throw Error();this.sql.exec('UPDATE meta SET notify_at=NULL');}catch{this.sql.exec('UPDATE meta SET notify_at=?',Date.now()+10000);}
+    try{const r=await this.env.REGISTRY.get(this.env.REGISTRY.idFromName('registry')).fetch('https://registry/status',{method:'POST',body:JSON.stringify({code:m.code,room:m.room,closed:!!m.closed})});await r.arrayBuffer();if(!r.ok&&r.status!==404)throw Error();this.sql.exec('UPDATE meta SET notify_at=NULL');}catch{this.sql.exec('UPDATE meta SET notify_at=?',Date.now()+10000);}
   }
   private async closeRoom(){
     const m=this.meta();if(!m||m.closed)return;

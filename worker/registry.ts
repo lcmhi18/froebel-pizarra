@@ -12,6 +12,7 @@ export class Registry extends DurableObject<Env> {
     super(ctx,env);
     this.canonical=ctx.id.equals(env.REGISTRY.idFromName('registry'));
     this.sql.exec('CREATE TABLE IF NOT EXISTS registry_settings(key TEXT PRIMARY KEY,value TEXT NOT NULL)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS legacy_room_wake(room TEXT PRIMARY KEY,due INTEGER NOT NULL)');
     this.sql.exec("CREATE TABLE IF NOT EXISTS rooms(code TEXT PRIMARY KEY,room TEXT,status TEXT NOT NULL CHECK(status IN ('open','closed','free')),closed_at INTEGER,release_at INTEGER)");
     this.sql.exec('CREATE TABLE IF NOT EXISTS counters(key TEXT PRIMARY KEY,count INTEGER NOT NULL,expires_at INTEGER NOT NULL)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS clients(ip_hash TEXT PRIMARY KEY,failures INTEGER NOT NULL DEFAULT 0,blocked_until INTEGER NOT NULL DEFAULT 0,next_entry_at INTEGER NOT NULL DEFAULT 0,expires_at INTEGER NOT NULL)');
@@ -36,9 +37,14 @@ export class Registry extends DurableObject<Env> {
     const rows=await response.json() as RoomRow[];
     this.ctx.storage.transactionSync(()=>{
       for(const row of rows)this.sql.exec('INSERT OR IGNORE INTO rooms VALUES(?,?,?,?,?)',row.code,row.room,row.status,row.closed_at,row.release_at);
+      // Preserve the Room identities before expired codes are released by clean().
+      // Wake closed legacy objects in bounded alarm batches so their constructor
+      // installs retention. Never delete student data from this Registry.
+      for(const row of rows)if(row.status==='closed'&&row.room)this.sql.exec('INSERT OR IGNORE INTO legacy_room_wake VALUES(?,?)',row.room,Date.now());
       this.sql.exec('INSERT OR REPLACE INTO registry_settings VALUES(?,?)','legacy_imported','1');
     });
     this.clean();
+    await this.schedule();
   }
   private clean(){
     const now=Date.now();
@@ -46,11 +52,17 @@ export class Registry extends DurableObject<Env> {
     for(const table of ['counters','clients','reentries'])this.sql.exec(`DELETE FROM ${table} WHERE expires_at<=?`,now);
   }
   private async schedule(){
-    const row=this.sql.exec<{due:number|null}>("SELECT min(due) AS due FROM (SELECT release_at AS due FROM rooms WHERE status='closed' UNION ALL SELECT expires_at FROM counters UNION ALL SELECT expires_at FROM clients UNION ALL SELECT expires_at FROM reentries)").toArray()[0];
+    const row=this.sql.exec<{due:number|null}>("SELECT min(due) AS due FROM (SELECT release_at AS due FROM rooms WHERE status='closed' UNION ALL SELECT expires_at FROM counters UNION ALL SELECT expires_at FROM clients UNION ALL SELECT expires_at FROM reentries UNION ALL SELECT due FROM legacy_room_wake)").toArray()[0];
     if(row?.due!==null&&row?.due!==undefined)await this.ctx.storage.setAlarm(Math.max(Date.now()+1,row.due));
     else await this.ctx.storage.deleteAlarm();
   }
-  async alarm(){if(this.canonical){this.clean();await this.schedule();}}
+  async alarm(){if(this.canonical){
+    for(const row of this.sql.exec<{room:string}>('SELECT room FROM legacy_room_wake WHERE due<=? ORDER BY due LIMIT 3',Date.now()).toArray()){
+      try{const response=await this.env.ROOM.get(this.env.ROOM.idFromName(row.room)).fetch('https://room/internal/retention-check');if(!response.ok)throw Error();await response.arrayBuffer();this.sql.exec('DELETE FROM legacy_room_wake WHERE room=?',row.room);}
+      catch{this.sql.exec('UPDATE legacy_room_wake SET due=? WHERE room=?',Date.now()+10000,row.room);}
+    }
+    this.clean();await this.schedule();
+  }}
   private limited(retryMs:number){return Response.json({error:'RATE_LIMITED'},{status:429,headers:{'Retry-After':String(Math.max(1,Math.ceil(retryMs/1000)))}});}
   private blocked(ipHash:string){const row=this.sql.exec<ClientRow>('SELECT * FROM clients WHERE ip_hash=?',ipHash).toArray()[0];return row&&row.blocked_until>Date.now()?this.limited(row.blocked_until-Date.now()):null;}
   private bump(key:string,expires:number){this.sql.exec('INSERT INTO counters VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=count+1',key,expires);}

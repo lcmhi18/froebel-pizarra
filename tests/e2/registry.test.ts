@@ -1,5 +1,5 @@
 import { env as bindings } from 'cloudflare:workers';
-import { runInDurableObject,runDurableObjectAlarm } from 'cloudflare:test';
+import { runInDurableObject,runDurableObjectAlarm,evictDurableObject } from 'cloudflare:test';
 import { beforeEach,afterEach,describe,it,expect,vi } from 'vitest';
 import type { Env } from '../../worker/protocol';
 import type { Registry } from '../../worker/registry';
@@ -17,7 +17,7 @@ describe.sequential('Registry with real Durable Object SQLite',()=>{
     now=Date.now()+365*86400000;
     vi.spyOn(Date,'now').mockImplementation(()=>now);
     for(const stub of [registry(),legacy()])await runInDurableObject(stub,async(_instance,state)=>{
-      for(const table of ['rooms','counters','clients','reentries'])state.storage.sql.exec(`DELETE FROM ${table}`);
+      for(const table of ['rooms','counters','clients','reentries','legacy_room_wake'])state.storage.sql.exec(`DELETE FROM ${table}`);
       if(state.storage.sql.exec("SELECT name FROM sqlite_master WHERE name='codes'").toArray().length)state.storage.sql.exec('DELETE FROM codes');
       await state.storage.deleteAlarm();
     });
@@ -99,4 +99,18 @@ describe.sequential('Registry with real Durable Object SQLite',()=>{
   it('rejects malformed internal inputs without exceptions',async()=>{
     for(const body of [null,[],{ipHash:'raw-ip'},{ipHash:digest(1),returningRemoved:true}])expect((await call('/entry',body)).status).toBe(400);
   });
+});
+
+it('closed legacy rooms receive retention even after their codes have expired',async()=>{
+ const roomName='legacy-retention-'+crypto.randomUUID(),room=env.ROOM.get(env.ROOM.idFromName(roomName));
+ await (await room.fetch('https://room/init',{method:'POST',body:JSON.stringify({code:'ABCD24',room:roomName,teacherHash:'a'.repeat(64)})})).arrayBuffer();
+ await runInDurableObject(room,async(_i,s)=>{s.storage.sql.exec('UPDATE meta SET closed=1,purge_at=NULL,grace_at=NULL');await s.storage.deleteAlarm();});
+ await evictDurableObject(room);
+ await runInDurableObject(legacy(),(_i,s)=>{s.storage.sql.exec('CREATE TABLE IF NOT EXISTS codes(code TEXT PRIMARY KEY,room TEXT,expires INTEGER)');s.storage.sql.exec('INSERT INTO codes VALUES(?,?,?)','ABCD24',roomName,Date.now()-1);});
+ await runInDurableObject(registry(),async(instance:Registry,s)=>{s.storage.sql.exec("DELETE FROM registry_settings WHERE key='legacy_imported'");await instance.bootstrapLegacy();});
+ expect(await runInDurableObject(registry(),(_i,s)=>s.storage.sql.exec('SELECT * FROM legacy_room_wake WHERE room=?',roomName).toArray().length)).toBe(1);
+ await runDurableObjectAlarm(registry());
+ expect(await runInDurableObject(room,(_i,s)=>s.storage.sql.exec<{purge_at:number}>('SELECT purge_at FROM meta').toArray()[0].purge_at)).toBeGreaterThan(Date.now());
+ await expect.poll(()=>runInDurableObject(room,(_i,s)=>s.storage.getAlarm()),{timeout:2000}).not.toBeNull();
+ expect(await runInDurableObject(registry(),(_i,s)=>s.storage.sql.exec('SELECT * FROM legacy_room_wake WHERE room=?',roomName).toArray())).toEqual([]);
 });

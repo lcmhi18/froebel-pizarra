@@ -23,12 +23,12 @@ La creación real requiere la sesión Supabase de un profesor u owner activo en 
 
 ## Verificar
 
-- `npm run test:e10`: build, 246 pruebas y simulación; compara construcciones y fórmulas con una referencia offline del HTML original. Ver [geometría](docs/E10.md) y [Konva](docs/KONVA-NUEVA.md).
-- `npm run test:e9`: build, 96 pruebas automáticas y simulación local, incluyendo geometría.
-- `npm run test:e8`: build con tipos, 88 pruebas automáticas y simulación local completa de un profesor y seis alumnos. La simulación levanta y detiene su propio Worker en 8791, con datos aislados en `.e8-test/`.
+- `npm run test:e10`: build, 247 pruebas y simulación; compara construcciones y fórmulas con una referencia offline del HTML original. Ver [geometría](docs/E10.md) y [Konva](docs/KONVA-NUEVA.md).
+- `npm run test:e9`: build, 97 pruebas automáticas y simulación local, incluyendo geometría.
+- `npm run test:e8`: build con tipos, 89 pruebas automáticas y simulación local completa de un profesor y seis alumnos. La simulación levanta y detiene su propio Worker en 8791, con datos aislados en `.e8-test/`.
 - `npm run test:sim`: solo esa simulación, sin navegador, servicios remotos ni despliegue.
 - `npm run test:engine`: 24 pruebas del motor, concurrencia y deshacer propio; diff de 500 objetos con límite p95 de 2 ms.
-- `npm run test:e2`: 43 pruebas de protocolo, Registry y Room con SQLite local, incluidas cuotas, alarmas, migración y navegación.
+- `npm run test:e2`: 44 pruebas de protocolo, Registry y Room con SQLite local, incluidas cuotas, alarmas, migración y navegación.
 - `npm run test:e5`: 14 pruebas del transporte. `node scripts/test-navigation.mjs`: 3 de rutas/historial. `npm run test:scaffold`: 4 de compilación/rutas y aislamiento de Konva.
 - `npm run worker:check`: empaquetado dry-run, sin desplegar.
 
@@ -42,7 +42,7 @@ El navegador de E8 se verificó con CUA y sus controles Playwright, en dos pesta
 
 ## Despliegue y costos
 
-Esta entrega es local: no incluye push ni despliegue. Antes de publicar, resolver la revisión de objetos históricos cerrados descrita en docs/E3.md y revisar los orígenes autorizados. Construir dist con `npm run build`.
+La publicación usa https://froebel-pizarra.vercel.app y el Worker autorizado de Fatima. La migración despierta salas antiguas cerradas todavía indexadas para instalar su retención. Los objetos cuyo índice ya eliminó el código anterior requieren inventario administrativo; ver [revisión de publicación](docs/PUBLICACION.md). Construir dist con `npm run build`.
 
 Cloudflare exclusivamente con **fatimamendo7@gmail.com**, cuenta `373df7d753c05ace8818906faae9377f`, mediante `npm run worker:deploy`, que verifica ambos. No usar otro comando para saltar esa comprobación. El frontend debe configurar VITE_ROOM_API_URL con el Worker autorizado y recompilar; las variables Supabase conservan el proyecto indicado por el usuario. Nunca publicar tokens de Cloudflare ni claves secretas en el cliente.
 
