@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5174",
-    "build": "npm run typecheck && npm run build:site && npm run build:app",
+    "build": "npm run typecheck && npm run build:site && npm run build:app && npm run build:konva",
     "preview": "vite preview --host 127.0.0.1",
-    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.tools.json && npm run typecheck --workspace @froebel/worker",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.tools.json && npm run typecheck --workspace @froebel/worker && tsc -p app-live/tsconfig.json",
     "worker:dev": "wrangler dev --local --config worker/wrangler.jsonc --ip 127.0.0.1 --port 8787",
     "worker:check": "wrangler deploy --dry-run --config worker/wrangler.jsonc",
     "worker:deploy": "node scripts/deploy-worker.mjs",
@@ -28,7 +28,9 @@
     "test:geometry": "node scripts/test-geometry.mjs",
     "test:e9": "npm run test:e8 && npm run test:geometry",
     "test:equivalence": "node scripts/test-equivalence.mjs",
-    "test:e10": "npm run test:e9 && npm run test:equivalence"
+    "test:e10": "npm run test:e9 && npm run test:equivalence",
+    "dev:konva": "vite --config vite.konva.config.ts",
+    "build:konva": "node scripts/build-konva.mjs"
   },
   "dependencies": {
     "@fontsource/nunito": "5.3.0",
@@ -61,7 +63,8 @@
   },
   "workspaces": [
     "worker",
-    "app"
+    "app",
+    "app-live"
   ],
   "engines": {
     "node": ">=24.0.0"

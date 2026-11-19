@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { createRequire } from 'node:module';
 import { discoverHtmlEntries } from '../config/html-entries.ts';
 
 test('new standalone pages are discovered without editing the Vite config', () => {
@@ -38,4 +39,13 @@ test('Cloudflare routes API before assets, while retaining SQLite migrations', (
   assert.deepEqual(config.assets.run_worker_first, ['/api', '/api/*']);
   assert(config.migrations.some(m => m.new_sqlite_classes?.includes('Registry') && m.new_sqlite_classes?.includes('Room')));
   assert.equal(config.account_id, '373df7d753c05ace8818906faae9377f');
+});
+
+test('Konva ships as an isolated React 18 page with reachable separate assets',()=>{
+ const fromKonva=createRequire(resolve('app-live/package.json'));
+ for(const name of ['react','react-dom'])assert.equal(JSON.parse(readFileSync(fromKonva.resolve(`${name}/package.json`),'utf8')).version,'18.3.1');
+ const html=readFileSync('dist/app-live/index.html','utf8');assert.match(html,/data-board-id="konva"/);
+ const scripts=[...html.matchAll(/(?:src|href)="(\/app-live\/assets\/[^" ]+)"/g)].map(m=>m[1]);assert(scripts.length>=2);
+ for(const asset of scripts)assert(existsSync(resolve('dist','.'+asset)),'Missing Konva asset '+asset);
+ assert(!/(?:src|href)="\/assets\//.test(html),'Konva must not reuse the React 19 root entry');
 });

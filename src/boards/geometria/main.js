@@ -5,6 +5,7 @@ import {sampleMotion,motionRunning} from './animation';
 import {validGeometryItem,safeProtractor} from './validity';
 import {attachLive} from '../../live/attach';
 import {button,icons} from '../../live/ui/dom';
+const boardId=document.body.dataset.boardId==='konva'?'konva':'geometria';
 const {S}=geometry,defaultProtractor=structuredClone(S.pr),affectedEvents=new WeakSet();let live,applying=false,lastAction='',motionFrame=0;
 const byId=id=>document.getElementById(id);
 function stopMotion(){
@@ -31,7 +32,7 @@ function write(state){
 function lock(value){geometry.setReadOnly(value);if(value)stopGesture();decorate();}
 function stopGesture(){geometry.cancelDrag();}
 const adapter=new GeometryAdapter(()=>geometryState(S.items,S.pr),write,lock);
-window.FroebelBoard={id:'geometria',adapter};
+window.FroebelBoard={id:boardId,adapter};
 function decorate(){
  const tools=byId('tools'),choices=[...tools.querySelectorAll(':scope > button[data-c],:scope > button[data-hk],:scope > button[data-rk],:scope > button[data-nk],:scope > button[data-gk],:scope > button[data-cr]')];
  if(choices.length){const details=document.createElement('details');details.className='creation';const summary=document.createElement('summary');summary.textContent=({tri:'Crear triángulo',qua:'Crear cuadrilátero',cir:'Crear círculo',pol:'Crear poliedro',rev:'Crear cuerpo',are:'Crear figura de área',lin:'Crear líneas'})[S.tab]||'Crear figura';details.append(summary,...choices);tools.append(details);}
@@ -64,9 +65,9 @@ document.addEventListener('click',event=>{const target=event.target.closest?.('[
 document.addEventListener('keydown',event=>{const card=event.target.closest?.('[data-gallery-select]');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();card.click();}});
 byId('bUn').onclick=()=>{if(!adapter.readOnly)live.engine.undo();};
 byId('bCls').remove();
-live=attachLive(adapter,{boardId:'geometria',workspace:byId('geometry-workspace'),slot:byId('live-slot')});
+live=attachLive(adapter,{boardId,workspace:byId('geometry-workspace'),slot:byId('live-slot')});
 live.subscribe(view=>{byId('st').textContent=view.status==='active'?'Conectado':view.error||'Esperando conexión…';});
-if(live.mode==='solo'){byId('st').textContent='Modo personal';byId('live-slot').append(button('Clase',icons.users,()=>location.assign('/profesor/?board=geometria')));}
+if(live.mode==='solo'){byId('st').textContent='Modo personal';byId('live-slot').append(button('Clase',icons.users,()=>location.assign(`/profesor/?board=${boardId}`)));}
 geometry.ui();decorate();
 export {adapter};
 

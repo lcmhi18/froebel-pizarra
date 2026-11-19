@@ -1,0 +1,6 @@
+{
+ "extends":"../tsconfig.json",
+ "compilerOptions":{"allowJs":true,"checkJs":false,"types":["vite/client"],"paths":{"@shared/*":["src/shared/*"]}},
+ "include":["main.tsx","renderer.ts","../src/boards/prueba/main.ts"],
+ "exclude":[]
+}

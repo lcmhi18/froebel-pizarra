@@ -28,9 +28,10 @@ function htmlRoutes(): Plugin {
 export default defineConfig({
   resolve: { alias: { '@shared': resolve(root, 'src/shared') } },
   plugins: [htmlRoutes()],
+  optimizeDeps:{entries:entries.map(entry=>entry.input)},
   server: {
     host: '127.0.0.1', port: 5174,
-    proxy: { '/api': { target: 'http://127.0.0.1:8787', ws: true } },
+    proxy: { '/api': { target: 'http://127.0.0.1:8787', ws: true }, '/app-live':{target:'http://127.0.0.1:5175',ws:true} },
   },
   build: {
     rollupOptions: {

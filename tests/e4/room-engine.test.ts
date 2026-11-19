@@ -63,3 +63,15 @@ it('E9 geometry shares polygon vertices, face colors and protractor while undo p
   s.engine.undo();await waitFor(()=>(t.adapter.getState().items[id].pts as any[])[0].x===1&&s.engine.pendingCount===0);expect(t.adapter.getState().items[id].f).toBe('#ffe100');expect(s.adapter.getState().fields.protractor).toEqual({on:1,x:500,y:280,r:30,R:200});
  }finally{t.dispose();s.dispose();}
 });
+
+it('the independent Konva board keeps its own state across board switches and user undo',async()=>{
+ const {teacher:t,student:s}=await room();
+ try{
+  t.send({type:'set_board',boardId:'konva'});await waitFor(()=>t.frames.filter(m=>m.type==='snapshot_end'&&m.boardId==='konva').length===1&&s.frames.filter(m=>m.type==='snapshot_end'&&m.boardId==='konva').length===1);
+  const id=s.engine.newId();s.adapter.change(state=>{state.items[id]={t:'t',x:100,y:100,s:30,c:'#2563eb',x_:'Clase Konva'};state.order.push(id);});await waitFor(()=>!!t.adapter.getState().items[id]&&s.engine.pendingCount===0);
+  t.adapter.change(state=>{state.items[id].c='#e03e3e';});await waitFor(()=>s.adapter.getState().items[id].c==='#e03e3e'&&t.engine.pendingCount===0);
+  s.adapter.change(state=>{state.items[id].x=180;});await waitFor(()=>t.adapter.getState().items[id].x===180&&s.engine.pendingCount===0);s.engine.undo();await waitFor(()=>t.adapter.getState().items[id].x===100&&s.engine.pendingCount===0);expect(t.adapter.getState().items[id].c).toBe('#e03e3e');
+  t.send({type:'set_board',boardId:'geometria'});await waitFor(()=>t.frames.some(m=>m.type==='snapshot_end'&&m.boardId==='geometria')&&s.frames.some(m=>m.type==='snapshot_end'&&m.boardId==='geometria'));expect(t.adapter.getState().order).toEqual([]);
+  t.send({type:'set_board',boardId:'konva'});await waitFor(()=>t.frames.filter(m=>m.type==='snapshot_end'&&m.boardId==='konva').length===2&&s.frames.filter(m=>m.type==='snapshot_end'&&m.boardId==='konva').length===2);expect(s.adapter.getState().items[id]).toEqual({t:'t',x:100,y:100,s:30,c:'#e03e3e',x_:'Clase Konva'});
+ }finally{t.dispose();s.dispose();}
+});

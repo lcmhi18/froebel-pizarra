@@ -20,6 +20,7 @@
     "vite.app.config.ts",
     "config/**/*.ts",
     "vitest.config.ts",
-    "scripts/sim.ts"
+    "scripts/sim.ts",
+    "vite.konva.config.ts"
   ]
 }

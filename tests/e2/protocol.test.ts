@@ -6,7 +6,7 @@ const base={opId:'a:1',author:'a',boardId:'prueba',gestureId:'gesture:1'};
 const parse=(value:unknown)=>parseClientFrame(JSON.stringify(value));
 describe('protocol v1 boundary',()=>{
   it('has a closed list of boards, errors and close codes',()=>{
-    expect(BOARD_IDS).toEqual(['prueba','_plantilla','geometria']);expect(ERROR_CODES).toHaveLength(12);
+    expect(BOARD_IDS).toEqual(['prueba','_plantilla','geometria','konva']);expect(ERROR_CODES).toHaveLength(12);
     expect(CLOSE_CODES.REPLACED_SESSION).toBe(4005);expect(CLOSE_CODES.AUTH_TIMEOUT).toBe(4008);
   });
   it('accepts valid teacher/student hello and controls',()=>{
