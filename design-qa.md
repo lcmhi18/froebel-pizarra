@@ -58,3 +58,7 @@ No quedan hallazgos visuales P0/P1/P2 dentro del alcance de E5. Como P3 quedan f
 ## E6 — Entradas y cambio de pizarra
 
 Revisión local por CUA: profesor escritorio y 390 px; alumno 390 px; espera/aceptación; selector con confirmación nativa; ambas páginas SVG navegan según el servidor; cierre/reapertura con estado restaurado. Capturas ignoradas .e6-test/profesor-mobile.jpg y alumno-mobile.jpg revisadas visualmente; sin desbordamiento horizontal. No se cambió la dirección visual de E5 ni se declara implementada la geometría completa. Ver docs/E6.md para evidencia y límites.
+
+## E8 — Verificación final
+
+CUA, dos pestañas: entrada y aceptación, círculo del alumno, arrastre confirmado por transforms iguales en ambos DOM, deshacer propio que conserva texto del profesor, cambio entre páginas y restauración, cierre y bloqueo. Consola de ambas sin errores ni avisos. Tema oscuro revisado en .e8-test/teacher-dark.jpg. El controlador de arrastre emitió una incidencia tras aplicar el movimiento; se validó el resultado por DOM y Deshacer. No se rediseñaron pantallas. Matriz completa y límites en docs/E8.md.
