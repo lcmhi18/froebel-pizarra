@@ -25,7 +25,7 @@ Páginas: `/profesor/`, `/alumno/`, `/boards/prueba/`. Se conservan las rutas an
 
 ## Workspaces y app/
 
-`worker/` es el workspace `@froebel/worker`; `app/` queda reservado en la configuración, pero **sus archivos no están disponibles**. No se crea ni modifica esa carpeta. `vite.app.config.ts` es una configuración externa para la futura salida `dist/app/`. `npm run build:app` omite el build si falta `app/package.json`; cuando exista, exige React y React DOM 18.3.1 resueltos desde ese paquete antes de compilar. La integración real con Konva queda pendiente de E7.
+`worker/` es el workspace `@froebel/worker`; `app/` queda reservado en la configuración, pero **sus archivos no están disponibles**. No se crea ni modifica esa carpeta. `vite.app.config.ts` es una configuración externa para la futura salida `dist/app/`. `npm run build:app` omite el build si falta `app/package.json`; cuando exista, exige React y React DOM 18.3.1 resueltos desde ese paquete antes de compilar. E7 revisó una candidata externa en academia-profesores/app y documentó la falta de un contrato externo para App completa; /app-live no está integrado. Ver [docs/E7.md](docs/E7.md).
 
 ## Publicación y costos
 
