@@ -1,8 +1,8 @@
-# Matriz de equivalencia de geometría — base para E10
+# Matriz de equivalencia de geometría — inventario de E9
 
-E9 incorporó el código del HTML y comprobó recorridos representativos. «Incorporado» no significa que cada combinación esté certificada. E10 debe completar el detalle por botón y gesto a partir del archivo original, sin sustituir esa comprobación por esta lista de familias.
+Este inventario conserva las comprobaciones propuestas al terminar E9. El resultado ejecutado en E10, sus 244 pruebas y sus límites están en [E10.md](E10.md). La lista siguiente es el plan de cobertura original, no una certificación de todas las combinaciones.
 
-| Familia o recorrido | Incorporado en E9 | Comprobación pendiente en E10 |
+| Familia o recorrido | Incorporado en E9 | Plan de comprobación al terminar E9 |
 | --- | --- | --- |
 | Triángulos | Seis construcciones, vértices, clasificación, grados, exteriores, divisiones, marcas, giro/escala | Cada construcción, gesto y opción en modo personal y compartido |
 | Cuadriláteros | Nueve construcciones, diagonales, paralelas, medidas, rellenos | Todas las variantes y sus transformaciones |

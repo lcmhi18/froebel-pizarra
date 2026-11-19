@@ -2,6 +2,7 @@ import './geometry.css';
 import {geometry} from './runtime';
 import {GeometryAdapter,geometryState} from './adapter';
 import {sampleMotion,motionRunning} from './animation';
+import {validGeometryItem,safeProtractor} from './validity';
 import {attachLive} from '../../live/attach';
 import {button,icons} from '../../live/ui/dom';
 const {S}=geometry,defaultProtractor=structuredClone(S.pr),affectedEvents=new WeakSet();let live,applying=false,lastAction='',motionFrame=0;
@@ -17,13 +18,14 @@ function startMotion(){
 
 // Rendering samples a shared command clock; animation frames never become network operations.
 // The legacy draw closure calls r directly, so the runtime installs this render interceptor.
-geometry.init({sample:sampleMotion,newId:()=>live?live.engine.newId():`solo:${crypto.randomUUID()}`,start:startMotion,stop:stopMotion});
+geometry.init({sample:sampleMotion,valid:validGeometryItem,onInvalid:()=>{byId('st').textContent='Figura incompatible: el resto de la pizarra sigue disponible.';},newId:()=>live?live.engine.newId():`solo:${crypto.randomUUID()}`,start:startMotion,stop:stopMotion});
 function renderMotion(){cancelAnimationFrame(motionFrame);geometry.draw();const selected=S.items[S.sel];if(selected?.motion){const frame=sampleMotion(selected,Date.now());for(const input of document.querySelectorAll('[data-sl]')){const key=input.dataset.sl;if(typeof frame[key]==='number')input.value=String(['u','un'].includes(key)?frame[key]*100:frame[key]);}} if(S.items.some(item=>motionRunning(item,Date.now())))motionFrame=requestAnimationFrame(renderMotion);}
 function write(state){
  const selected=S.items[S.sel]?.id,active=document.activeElement,focusId=active?.id,start=active?.selectionStart,end=active?.selectionEnd;
- S.items=state.order.flatMap(id=>state.items[id]?[{...state.items[id],id}]:[]);S.pr=state.fields.protractor||structuredClone(defaultProtractor);S.sel=S.items.findIndex(item=>item.id===selected);if(S.sel<0)S.sd=-1;
+ S.items=state.order.flatMap(id=>state.items[id]?[{...state.items[id],id}]:[]);S.pr=safeProtractor(state.fields.protractor||defaultProtractor);S.sel=S.items.findIndex(item=>item.id===selected);if(S.sel<0)S.sd=-1;
  geometry.animationFlag=S.items.some(item=>item.motion)?1:null;
- applying=true;try{geometry.ui();decorate();renderMotion();}finally{applying=false;}
+ const keepEditor=active instanceof HTMLInputElement&&active.closest('#geometry-workspace')&&S.sel>=0;
+ applying=true;try{if(!keepEditor)geometry.ui();decorate();renderMotion();}catch{S.sel=-1;geometry.ui();decorate();renderMotion();byId('st').textContent='Figura incompatible: puedes seguir usando la pizarra.';}finally{applying=false;}
  const input=focusId&&byId(focusId);if(input&&input instanceof HTMLInputElement){input.focus({preventScroll:true});if(input.type==='text')try{input.setSelectionRange(start,end);}catch{}}
 }
 function lock(value){geometry.setReadOnly(value);if(value)stopGesture();decorate();}
@@ -36,7 +38,9 @@ function decorate(){
 
  for(const button of document.querySelectorAll('#tabs button')){button.setAttribute('aria-pressed',String(button.classList.contains('on')));}
  for(const button of document.querySelectorAll('#tools button,#ctx button,#cols button'))button.disabled=adapter.readOnly;
- for(const input of document.querySelectorAll('#tools input,#ctx input,#cols input')){input.disabled=adapter.readOnly;if(!input.getAttribute('aria-label'))input.setAttribute('aria-label',input.id==='ti'?'Texto para insertar':input.id==='ti2'?'Texto seleccionado':input.type==='color'?'Elegir color':'Parámetro de la figura');}
+ for(const input of document.querySelectorAll('#tools input,#ctx input,#cols input')){input.disabled=adapter.readOnly;if(!input.getAttribute('aria-label'))input.setAttribute('aria-label',input.id==='ti'?'Texto para insertar':input.id==='ti2'?'Texto seleccionado':input.type==='color'?'Color '+(input.parentElement.textContent.trim()||'de la figura'):(input.closest('label')?.textContent.trim()||'Parámetro de la figura'));}
+ for(const card of document.querySelectorAll('[data-gallery-select]')){card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-pressed',String(card.textContent.includes('✓')));}
+ for(const zoom of document.querySelectorAll('[data-gallery-zoom]'))zoom.setAttribute('aria-label','Ampliar fórmula');
  for(const button of document.querySelectorAll('.sw'))button.setAttribute('aria-label',`Color ${button.dataset.col}`);
  byId('bUn').disabled=adapter.readOnly;byId('bCl').disabled=adapter.readOnly;
  byId('sv').setAttribute('aria-disabled',String(adapter.readOnly));
@@ -56,7 +60,8 @@ for(const type of ['click','input','change','pointermove','pointerup','pointerca
  if(!affectedEvents.has(event)&&!event.target.closest?.('#geometry-workspace,#top,#gal'))return;
  queueMicrotask(()=>{if(!applying&&!adapter.readOnly){adapter.capture(!['pointermove','input'].includes(type));decorate();renderMotion();}});
 });
-document.addEventListener('click',event=>{const target=event.target.closest?.('[data-gallery-close],[data-gallery-place],[data-gallery-zoom],[data-gallery-select]');if(!target)return;if(target.hasAttribute('data-gallery-close'))byId('gal').style.display='none';else if(target.hasAttribute('data-gallery-zoom'))geometry.galleryZoom(Number(target.dataset.galleryZoom));else if(target.hasAttribute('data-gallery-select'))geometry.gallerySelect(Number(target.dataset.gallerySelect));else if(!adapter.readOnly){geometry.galleryPlace();adapter.capture(true);decorate();renderMotion();}});
+document.addEventListener('click',event=>{const target=event.target.closest?.('[data-gallery-close],[data-gallery-place],[data-gallery-zoom],[data-gallery-select]');if(!target)return;if(target.hasAttribute('data-gallery-close'))byId('gal').style.display='none';else if(target.hasAttribute('data-gallery-zoom'))geometry.galleryZoom(Number(target.dataset.galleryZoom));else if(target.hasAttribute('data-gallery-select'))geometry.gallerySelect(Number(target.dataset.gallerySelect));else if(!adapter.readOnly){geometry.galleryPlace();adapter.capture(true);renderMotion();}decorate();});
+document.addEventListener('keydown',event=>{const card=event.target.closest?.('[data-gallery-select]');if(card&&(event.key==='Enter'||event.key===' ')){event.preventDefault();card.click();}});
 byId('bUn').onclick=()=>{if(!adapter.readOnly)live.engine.undo();};
 byId('bCls').remove();
 live=attachLive(adapter,{boardId:'geometria',workspace:byId('geometry-workspace'),slot:byId('live-slot')});

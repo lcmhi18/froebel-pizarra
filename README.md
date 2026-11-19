@@ -1,6 +1,6 @@
 # Froebel Academy · Pizarra en vivo
 
-**E9: geometría del HTML incorporada y probada localmente.** La nueva página conserva sus nueve familias y se conecta a la sala. E10 comparará cada opción con el original; todavía no se afirma equivalencia exhaustiva. Konva sigue pendiente según E7. [E9](docs/E9.md) · [Matriz para E10](docs/GEOMETRIA-EQUIVALENCIA.md).
+**E10: geometría comparada con el original y verificada localmente.** Incluye 244 pruebas automáticas, simulación de clase y recorridos de navegador. Se corrigieron edición de deslizadores, accesibilidad de galería y tolerancia a figuras/animaciones malformadas. El alcance y sus límites están en [E10](docs/E10.md). Konva sigue pendiente según E7.
 
 ## Iniciar localmente
 
@@ -22,6 +22,7 @@ La creación real requiere la sesión Supabase de un profesor u owner activo en 
 
 ## Verificar
 
+- `npm run test:e10`: build, 244 pruebas y simulación; compara construcciones y fórmulas con una referencia offline del HTML original. Ver [cobertura real](docs/E10.md).
 - `npm run test:e9`: build, 94 pruebas automáticas y simulación local, incluyendo geometría.
 - `npm run test:e8`: build con tipos, 86 pruebas automáticas y simulación local completa de un profesor y seis alumnos. La simulación levanta y detiene su propio Worker en 8791, con datos aislados en `.e8-test/`.
 - `npm run test:sim`: solo esa simulación, sin navegador, servicios remotos ni despliegue.

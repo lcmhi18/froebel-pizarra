@@ -2,7 +2,7 @@
  * Geometry and tools retained; legacy hosted database removed, sinks sanitized, IDs/history/animation supplied by bridge. */
 import { putHTML } from './sanitize';
 const htmlAttr=value=>String(value).replace(/[&<>"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]));
-let geometrySample = item => item;
+let geometrySample = item => item,geometryValid=()=>true,geometryRenderError=()=>{};
 function r() { const original = S.items; S.items = original.map(item => geometrySample(item, Date.now())); try {
     renderGeometry();
 }
@@ -10,6 +10,7 @@ finally {
     S.items = original;
 } }
 let geometryNewId = () => `solo:${crypto.randomUUID()}`, geometryAnimationStart = () => { }, geometryAnimationStop = () => { };
+function listen(target,type,callback){target.addEventListener(type,event=>{try{callback(event);}catch{geometryRenderError();drag=null;S.sel=-1;}});}
 const $ = i => document.getElementById(i), sv = $('sv'), L = $('L');
 const COL = ['#111111', '#6b7280', '#e03e3e', '#f97316', '#eab308', '#84cc16', '#2e8b57', '#06b6d4', '#2563eb', '#8e44ad', '#ec4899', '#92400e'];
 const S = { pr: { on: 0, x: 620, y: 450, r: 0, R: 200 }, sd: -1, gs: [], items: [], tool: 'm', col: '#2563eb', sel: -1, snap: 0, tab: 'tri', ang: 0, hide: 1, hist: [], n: 0 };
@@ -153,6 +154,8 @@ function draw() { cancelAnimationFrame(raf); raf = requestAnimationFrame(r); }
 function renderGeometry() {
     let o = '';
     S.items.forEach((it, i) => {
+        if(!geometryValid(it)){geometryRenderError();return;}
+        const before=o;try {
         o += `<g data-geometry-item="${it.id}">`;
         const s = i == S.sel;
         if (it.t == 'p') {
@@ -210,6 +213,7 @@ function renderGeometry() {
         else
             o += `<text x="${it.x}" y="${it.y}" text-anchor="middle" font-size="${it.s}" font-weight="700" fill="${it.c}">${it.x_.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</text>` + (s ? `<rect x="${it.x - it.s * .3 * it.x_.length - 6}" y="${it.y - it.s}" width="${it.s * .6 * it.x_.length + 12}" height="${it.s * 1.3}" fill="none" stroke="#2563eb" stroke-dasharray="5 4"/>` : '');
         o += '</g>';
+        }catch{ o=before;geometryRenderError(); }
     });
     putHTML(L, o + prot());
     owl();
@@ -262,6 +266,7 @@ function owl() {
     $('owl').textContent = '🦉 ' + m;
 }
 function ui() {
+    if(S.items[S.sel]&&!geometryValid(S.items[S.sel]))S.sel=-1;
     putHTML($('tabs'), Object.entries(TABS).map(([k, v]) => `<button data-k="${k}" class="${S.tab == k ? 'on' : ''}">${v}</button>`).join(''));
     putHTML($('tools'), [['m', '👆 Mover'], ['p', '✏️ Lápiz'], ['l', '📏 Línea'], ['t', '🔤 Texto'], ['pt', '🔴 Puntero'], ['bk', '🪣 Balde']].map(([k, v]) => `<button data-t="${k}" class="${S.tool == k ? 'on' : ''}">${v}</button>`).join('') + (S.tool == 'bk' ? '<button data-x="bke" class="' + (S.bke ? 'on' : '') + '">🧽 Quitar color</button>' : '') + ' <span>Figuras:</span>' + SH.map(([k, v]) => `<button data-sh="${k}">${v}</button>`).join('') + ' <input type="text" id="ti" placeholder="Texto…" maxlength="14" value="' + htmlAttr(txtIn || '') + '"> <button data-x="pr" class="' + (S.pr.on ? 'on' : '') + '">📐 Transportador</button><button data-x="prm">➖</button><button data-x="prM">➕</button> │ ' + (S.tab == 'tri' ? Object.keys(TRI).map(k => `<button data-c="${k}">${k}</button>`).join('') : S.tab == 'qua' ? Object.keys(QUA).map(k => `<button data-c="${k}">${k}</button>`).join('') : S.tab == 'pol' ? '<b>Crear poliedro:</b>' + PY.NM.map((n, i) => `<button data-hk="${i}">${n}</button>`).join('') + '<button data-hk="r">🎲 Sorpresa</button><button data-x="ynm" class="' + (S.nm ? 'on' : '') + '">🏷️ Nombres</button><button data-x="yeu">🧮 Fórmula de Euler</button>' : S.tab == 'rev' ? '<b>Crear dibujo:</b>' + ['🛢️ Cilindro', '🔻 Cono', '🔵 Esfera'].map((n, i) => `<button data-rk="${i}">${n}</button>`).join('') : S.tab == 'lin' ? '<b>Dibujar:</b>' + [['lr', '↔️ Recta'], ['ly', '●→ Rayo'], ['ls', '●—● Segmento']].map(([k, v]) => `<button data-t="${k}" class="${S.tool == k ? 'on' : ''}">${v}</button>`).join('') + '<span>Arrastra en la pizarra. Con 👆 Mover tocas la línea para girarla, pintarla o mover sus puntas.</span>' : S.tab == 'are' ? AR.map((a, i) => `<button data-gk="${i}">${a[0]}</button>`).join('') + '<button data-gk="r">🎲 Sorpresa</button>' : S.tab == 'cir' ? '<b>Crear dibujo:</b>' + [2, 3, 4, 5, 6].map(v => `<button data-cr="${v}">${v} cm</button>`).join('') + '<button data-cr="r">🎲 Sorpresa</button>' : S.tab == 'ang' ? '<span>Crear ángulo de:</span>' + [30, 45, 60, 90, 120, 150, 180].map(v => `<button data-a="${v}">${v}°</button>`).join('') + '<button data-a="r">🎲</button>' : '<span>Usa lápiz, línea y texto sobre cualquier figura.</span>'));
     putHTML($('cols'), (() => { const q = S.items[S.sel]; return q && q.t == 'c' ? '<b>Pintar: ' + (CN[q.af || 'cf'] || '') + '</b> ' : q && q.t == 'r' ? '<b>Pintar: ' + ELR[q.k][+(q.af || 0)][0] + '</b> ' : q && q.t == 'y' ? '<b>' + PY.label(q) + '</b> ' : ''; })() + COL.map(c => `<button class="sw ${S.col == c ? 'sel' : ''}" data-col="${c}" style="background:${c}"></button>`).join('') + '<input type="color" id="cf" value="' + S.col + '">');
@@ -585,6 +590,7 @@ function hit(p) {
     }
     for (let i = I.length - 1; i >= 0; i--) {
         const it = I[i];
+        if(!geometryValid(it))continue;
         let h = 0;
         if (it.t == 'p') {
             h = ptin(it.pts, p);
@@ -1665,11 +1671,11 @@ function mvp(p) {
         TR.shift();
     dp();
 }
-sv.addEventListener('pointermove', e => {
+listen(sv,'pointermove', e => {
     if (S.tool == 'pt')
         mvp(pt(e));
 });
-sv.addEventListener('pointerdown', e => {
+listen(sv,'pointerdown', e => {
     sv.setPointerCapture(e.pointerId);
     const p = pt(e);
     anStop();
@@ -1682,6 +1688,7 @@ sv.addEventListener('pointerdown', e => {
         const I = S.items;
         for (let i = I.length - 1; i >= 0 && !ok; i--) {
             const m = I[i];
+            if(!geometryValid(m))continue;
             ok = m.t == 'p' ? bkF(m, p) : m.t == 'l' ? bkL(m, p) : m.t == 'c' ? bkC(m, p) : 0;
         }
         for (let i = I.length - 1; i >= 0 && !ok; i--) {
@@ -1735,7 +1742,7 @@ sv.addEventListener('pointerdown', e => {
     drag = { ...h, px: p.x, py: p.y, pts0: i0 && i0.pts ? i0.pts.map(q => ({ ...q })) : null };
     ui();
 });
-sv.addEventListener('pointermove', e => {
+listen(sv,'pointermove', e => {
     if (!drag)
         return;
     const p = pt(e), it = S.items[S.sel >= 0 ? S.sel : S.items.length - 1];
@@ -1854,9 +1861,9 @@ const end = e => {
     drag = null;
     ui();
 };
-sv.addEventListener('pointerup', end);
-sv.addEventListener('pointercancel', end);
-document.addEventListener('click', e => {
+listen(sv,'pointerup', end);
+listen(sv,'pointercancel', end);
+listen(document,'click', e => {
     const b = e.target.closest('button');
     if (!b)
         return;
@@ -1914,7 +1921,7 @@ document.addEventListener('click', e => {
     else if (d.x)
         act(d.x);
 });
-document.addEventListener('input', e => {
+listen(document,'input', e => {
     if (e.target.dataset.lc !== undefined || e.target.dataset.fc !== undefined) {
         const it = S.items[S.sel];
         if (it) {
@@ -2035,7 +2042,7 @@ $('bBig').onclick = e => {
     else if (!b && document.fullscreenElement)
         document.exitFullscreen();
 };
-document.addEventListener('keydown', e => {
+listen(document,'keydown', e => {
     if (e.key == 'Delete' && e.target.tagName != 'INPUT')
         act('del');
 });
@@ -2588,7 +2595,7 @@ PY.CARDS.forEach((c, i) => { const a = [c[0], c[1], c[2], PY.BAND[i % 6]]; a.cat
 (() => { const a = ['Área del rectángulo', 'A = b · h', 'Largo por ancho', '#2563eb', `<g stroke="#fbbf24" stroke-width="1.6" stroke-linecap="round"><line x1="19" y1="14" x2="26" y2="17"/><line x1="17" y1="21.5" x2="26" y2="21.5"/><line x1="19" y1="29" x2="26" y2="26"/><line x1="181" y1="14" x2="174" y2="17"/><line x1="183" y1="21.5" x2="174" y2="21.5"/><line x1="181" y1="29" x2="174" y2="26"/></g><rect x="31" y="10" width="138" height="23" rx="11.5" fill="#0b2a5b" stroke="#22d3ee" stroke-width="2.2"/><text x="100" y="25" font-size="10.4" font-weight="800" fill="#fff" text-anchor="middle">ÁREA DEL RECTÁNGULO</text><rect x="18" y="45" width="86" height="39" fill="#bfe3fb" stroke="#0b1f5c" stroke-width="1.7"/><rect x="18.8" y="45.8" width="6.5" height="6.5" fill="#e9d5ff" stroke="#7e22ce" stroke-width="1"/><rect x="96.7" y="45.8" width="6.5" height="6.5" fill="#e9d5ff" stroke="#7e22ce" stroke-width="1"/><rect x="18.8" y="76.7" width="6.5" height="6.5" fill="#e9d5ff" stroke="#7e22ce" stroke-width="1"/><rect x="96.7" y="76.7" width="6.5" height="6.5" fill="#e9d5ff" stroke="#7e22ce" stroke-width="1"/><line x1="11" y1="50" x2="11" y2="80" stroke="#5b0fa8" stroke-width="1.3"/><polygon points="11,47 8.7,51.2 13.3,51.2" fill="#5b0fa8"/><polygon points="11,83 8.7,78.8 13.3,78.8" fill="#5b0fa8"/><text x="4" y="68" font-size="11" font-weight="800" font-style="italic" font-family="Georgia,Times New Roman,serif" fill="#5b0fa8" text-anchor="middle">h</text><line x1="23" y1="91" x2="99" y2="91" stroke="#5b0fa8" stroke-width="1.3"/><polygon points="20,91 24.2,88.7 24.2,93.3" fill="#5b0fa8"/><polygon points="102,91 97.8,88.7 97.8,93.3" fill="#5b0fa8"/><text x="61" y="104" font-size="12" font-weight="800" font-style="italic" font-family="Georgia,Times New Roman,serif" fill="#5b0fa8" text-anchor="middle">b</text><rect x="127" y="41" width="54" height="12" rx="6.0" fill="#bfe3fb"/><text x="154.0" y="49.64" font-size="7.4" font-weight="800" fill="#0b2a5b" text-anchor="middle">Fórmula:</text><rect x="111" y="56" width="86" height="25" rx="11.363636363636363" fill="#f3faff" stroke="#0ea5e9" stroke-width="2.2"/><text x="154" y="74" font-size="15" font-family="Georgia,Times New Roman,serif" font-style="italic" font-weight="800" fill="#0b2a5b" text-anchor="middle">A = b · h</text>`], b = ['Área del cuadrado', 'A = l²', 'Lado por lado', '#0d9488', `<g stroke="#fbbf24" stroke-width="1.6" stroke-linecap="round"><line x1="19" y1="14" x2="26" y2="17"/><line x1="17" y1="21.5" x2="26" y2="21.5"/><line x1="19" y1="29" x2="26" y2="26"/><line x1="181" y1="14" x2="174" y2="17"/><line x1="183" y1="21.5" x2="174" y2="21.5"/><line x1="181" y1="29" x2="174" y2="26"/></g><rect x="31" y="10" width="138" height="23" rx="11.5" fill="#0b2a5b" stroke="#22d3ee" stroke-width="2.2"/><text x="100" y="25" font-size="10.4" font-weight="800" fill="#fff" text-anchor="middle">ÁREA DEL CUADRADO</text><rect x="40" y="42" width="48" height="48" fill="#bfe3fb" stroke="#0b1f5c" stroke-width="1.7"/><rect x="40.8" y="42.8" width="6.5" height="6.5" fill="#e9d5ff" stroke="#7e22ce" stroke-width="1"/><rect x="80.7" y="42.8" width="6.5" height="6.5" fill="#e9d5ff" stroke="#7e22ce" stroke-width="1"/><rect x="40.8" y="82.7" width="6.5" height="6.5" fill="#e9d5ff" stroke="#7e22ce" stroke-width="1"/><rect x="80.7" y="82.7" width="6.5" height="6.5" fill="#e9d5ff" stroke="#7e22ce" stroke-width="1"/><line x1="31" y1="47" x2="31" y2="85" stroke="#5b0fa8" stroke-width="1.3"/><polygon points="31,44 28.7,48.2 33.3,48.2" fill="#5b0fa8"/><polygon points="31,88 28.7,83.8 33.3,83.8" fill="#5b0fa8"/><text x="20" y="70" font-size="12" font-weight="800" font-style="italic" font-family="Georgia,Times New Roman,serif" fill="#5b0fa8" text-anchor="middle">l</text><line x1="44" y1="97" x2="84" y2="97" stroke="#5b0fa8" stroke-width="1.3"/><polygon points="41,97 45.2,94.7 45.2,99.3" fill="#5b0fa8"/><polygon points="87,97 82.8,94.7 82.8,99.3" fill="#5b0fa8"/><text x="64" y="112" font-size="12" font-weight="800" font-style="italic" font-family="Georgia,Times New Roman,serif" fill="#5b0fa8" text-anchor="middle">l</text><rect x="111" y="48" width="58" height="12" rx="6.0" fill="#bfe3fb"/><text x="140.0" y="56.64" font-size="7.4" font-weight="800" fill="#0b2a5b" text-anchor="middle">Fórmula:</text><rect x="100" y="64" width="94" height="30" rx="13.636363636363635" fill="#f3faff" stroke="#0ea5e9" stroke-width="2.2"/><text x="147" y="86" font-size="17" font-family="Georgia,Times New Roman,serif" font-style="italic" font-weight="800" fill="#0b2a5b" text-anchor="middle">A = l<tspan dy="-6" font-size="10">2</tspan></text>`]; a.cat = 'cua'; b.cat = 'cua'; GAL.push(a, b); })();
 S.nm = 1;
 var PYS = 0;
-document.addEventListener('input', e => {
+listen(document,'input', e => {
     const t = e.target, d = t.dataset, o = S.items[S.sel];
     if (!d || !o || o.t != 'y')
         return;
@@ -2622,7 +2629,7 @@ document.addEventListener('input', e => {
     }
     draw();
 });
-document.addEventListener('change', e => {
+listen(document,'change', e => {
     const d = e.target.dataset;
     if (d && (d.yg !== undefined || d.yf !== undefined || d.yv !== undefined || d.ye !== undefined)) {
         PYS = 0;
@@ -2710,7 +2717,7 @@ let PCS = 0, RO = 0;
 /* ===== TEXTO: escribir, tamaño, potencias, raíz y letras griegas (en todas las secciones) ===== */
 const SUP = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', 'n': 'ⁿ', 'x': 'ˣ', 'i': 'ⁱ', '+': '⁺', '-': '⁻' };
 const tsup = v => v.replace(/\^([0-9nxi+\-])/g, (m, c) => SUP[c]);
-document.addEventListener('input', e => {
+listen(document,'input', e => {
     const i = e.target;
     if (i.id != 'ti2')
         return;
@@ -2737,11 +2744,11 @@ document.addEventListener('input', e => {
         t.value = v;
     draw();
 });
-document.addEventListener('change', e => {
+listen(document,'change', e => {
     if (e.target.id == 'ti2')
         PCS = 0;
 });
-document.addEventListener('click', e => {
+listen(document,'click', e => {
     const b = e.target.closest('button[data-ins]');
     if (!b)
         return;
@@ -2763,4 +2770,4 @@ document.addEventListener('click', e => {
     catch (_) { }
     draw();
 });
-export const geometry = { gallerySelect:gt,galleryZoom:gz,galleryPlace:()=>gp(),S, ui, draw, r, init(hooks) { geometrySample = hooks.sample; geometryNewId = hooks.newId; geometryAnimationStart = hooks.start; geometryAnimationStop = hooks.stop; }, setReadOnly(value) { RO = value ? 1 : 0; drag = null; document.body.classList.toggle('ro', !!value); }, get dragging() { return !!drag; }, get animationFlag() { return AN; }, set animationFlag(value) { AN = value; }, cancelDrag() { drag = null; }, labels: TABS };
+export const geometry = { gallerySelect:gt,galleryZoom:gz,galleryPlace:()=>gp(),S, ui, draw, r, init(hooks) { geometrySample = hooks.sample;geometryValid=hooks.valid||(()=>true);geometryRenderError=hooks.onInvalid||(()=>{}); geometryNewId = hooks.newId; geometryAnimationStart = hooks.start; geometryAnimationStop = hooks.stop; }, setReadOnly(value) { RO = value ? 1 : 0; drag = null; document.body.classList.toggle('ro', !!value); }, get dragging() { return !!drag; }, get animationFlag() { return AN; }, set animationFlag(value) { AN = value; }, cancelDrag() { drag = null; }, labels: TABS };
