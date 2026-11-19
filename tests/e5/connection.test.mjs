@@ -66,3 +66,12 @@ test('network failure during reopen is reported without leaking the teacher toke
 test('an expired student credential is cleared so the next attempt can request a new admission',async t=>{
  const h=harness(t,{role:'student',teacherToken:undefined});h.mocks.sessionStorage.setItem('room:ABC234:student','12345678-1234-4234-8234-123456789012');h.connection.start();await until(()=>h.sockets.length===1);h.sockets[0].open();h.sockets[0].close(4006,'BAD_AUTH');await until(()=>h.connection.getSnapshot().status==='ended');assert.equal(h.mocks.sessionStorage.getItem('room:ABC234:student'),null);h.connection.retry();assert.equal(h.connection.getSnapshot().status,'entry');assert.equal(h.sockets.length,1);
 });
+
+test('a board change freezes edits until its authoritative snapshot and teacher selector sends the target',async t=>{
+ const h=harness(t),ws=await h.ready();h.connection.setBoard('_plantilla');assert.deepEqual(ws.sent.at(-1),{type:'set_board',boardId:'_plantilla'});
+ ws.receive({type:'board_changed',boardId:'_plantilla'});assert.equal(h.adapter.readOnly,true);assert.equal(h.connection.getSnapshot().status,'reconnecting');
+ const state={items:{'teacher:new':{type:'circle',x:10}},order:['teacher:new'],fields:{}};
+ ws.receive({type:'snapshot_start',snapshotId:'next',boardId:'_plantilla',seq:9,chunks:1});ws.receive({type:'snapshot_chunk',snapshotId:'next',index:0,data:JSON.stringify(state)});ws.receive({type:'snapshot_end',snapshotId:'next',boardId:'_plantilla',seq:9});
+ assert.equal(h.connection.getSnapshot().boardId,'_plantilla');assert.equal(h.connection.getSnapshot().status,'active');assert.equal(h.adapter.readOnly,false);assert.deepEqual(h.adapter.getState(),state);assert.equal(h.connection.engine.sequence,9);
+});
+test('student cannot send a board change through the selector API',async t=>{const h=harness(t,{role:'student',name:'Ana'}),ws=await h.ready();const count=ws.sent.length;h.connection.setBoard('_plantilla');assert.equal(ws.sent.length,count);});

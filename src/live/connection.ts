@@ -50,7 +50,7 @@ export class RoomConnection{
    case 'error':this.update({error:messages[message.code]||message.code});if(this.engine.pendingCount||message.ref){this.outgoing.clear();this.engine.reject();}break;
    case 'paused':this.paused=true;this.ready=false;this.outgoing.clear();this.engine.setReadOnly(true);this.update({status:'paused',error:messages.PAUSED});break;
    case 'resumed':if(this.paused){this.paused=false;this.send({type:'resync_request',fromSeq:this.engine.sequence});}break;
-   case 'board_changed':this.update({boardId:message.boardId});break;
+   case 'board_changed':this.ready=false;this.outgoing.clear();this.chunks.clear();this.engine.setReadOnly(true);this.update({boardId:message.boardId,status:'reconnecting'});break;
    case 'snapshot_start':if(message.chunks>0&&message.chunks<=1024)this.chunks.set(message.snapshotId,{total:message.chunks,parts:[],seq:message.seq,boardId:message.boardId});break;
    case 'snapshot_chunk':{const entry=this.chunks.get(message.snapshotId);if(entry&&message.index>=0&&message.index<entry.total)entry.parts[message.index]=message.data;break;}
    case 'snapshot_end':{
@@ -89,6 +89,7 @@ export class RoomConnection{
    ws.onerror=()=>{if(!this.stopped&&this.ws===ws)this.update({error:'Se perdió la conexión. Intentando recuperar la sala…'});};
   }catch{if(!this.stopped&&generation===this.generation){this.update({status:'reconnecting'});this.reconnect=setTimeout(()=>void this.connect(),2000);}}
  }
+ setBoard(boardId:BoardId){if(this.options.role==='teacher'&&this.view.status==='active')this.send({type:'set_board',boardId});}
  action(type:string,studentId?:string){this.send({type:({remove:'kick',close:'close_room'} as Record<string,string>)[type]||type,...(studentId?{studentId}:{})});}
  retry(){this.disconnect();this.update({error:''});this.start();}
  async reopen(){

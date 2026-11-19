@@ -142,8 +142,12 @@ export class Room extends DurableObject<Env>{
     }else{
       const previous=this.student(message.studentId);
       if(message.studentId&&!previous){this.retire(ws,CLOSE_CODES.BAD_AUTH,'BAD_AUTH');return;}
-      const entry=await this.env.REGISTRY.get(this.env.REGISTRY.idFromName('registry')).fetch('https://registry/entry',{method:'POST',body:JSON.stringify({ipHash:a.ipHash,...(previous?{subjectHash:await hash(previous.id),returningRemoved:previous.status==='removed'}:{})})});
-      if(!entry.ok){this.error(ws,'RATE_LIMITED');this.retire(ws,CLOSE_CODES.ABUSE,'RATE_LIMITED');return;}
+      // An authenticated resume is not a new admission request. Page-to-board navigation
+      // must not consume another three-second quota; removed identities still do.
+      if(!previous||previous.status==='removed'){
+        const entry=await this.env.REGISTRY.get(this.env.REGISTRY.idFromName('registry')).fetch('https://registry/entry',{method:'POST',body:JSON.stringify({ipHash:a.ipHash,...(previous?{subjectHash:await hash(previous.id),returningRemoved:true}:{})})});
+        if(!entry.ok){this.error(ws,'RATE_LIMITED');this.retire(ws,CLOSE_CODES.ABUSE,'RATE_LIMITED');return;}
+      }
     }
     // Authentication can yield to alarms/other sockets. Re-check durable authority afterwards.
     if(this.meta()?.closed||!this.sql.exec('SELECT socket_id FROM auth_deadlines WHERE socket_id=? AND deadline>?',a.socketId,Date.now()).toArray().length){this.retire(ws,CLOSE_CODES.AUTH_TIMEOUT,'AUTH_TIMEOUT');return;}

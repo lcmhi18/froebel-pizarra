@@ -21,7 +21,8 @@
     "typecheck:e2": "tsc -p tests/tsconfig.json",
     "test:e3": "npm run typecheck:e2 && vitest run --config vitest.config.ts tests/e3",
     "test:e4": "npm run test:engine && npm run typecheck:e2 && vitest run --config vitest.config.ts tests/e4",
-    "test:e5": "node scripts/test-connection.mjs"
+    "test:e5": "node scripts/test-connection.mjs",
+    "test:e6": "node scripts/test-navigation.mjs && npm run test:e5 && npm run test:e2"
   },
   "dependencies": {
     "@fontsource/nunito": "5.3.0",

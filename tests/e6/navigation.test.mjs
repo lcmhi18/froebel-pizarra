@@ -1,0 +1,7 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {boardUrl,recentRooms,rememberRoom,forgetRoom} from '../../.live-test/unit/live/navigation.js';
+const storage=()=>{const m=new Map();return {get length(){return m.size;},key:i=>[...m.keys()][i]??null,getItem:k=>m.get(k)??null,setItem:(k,v)=>m.set(k,String(v)),removeItem:k=>m.delete(k)};};
+test('destinations are allowlisted pages and URLs contain no credentials',()=>{assert.equal(boardUrl('_plantilla','ABC234','student'),'/boards/_plantilla/?room=ABC234&role=student');assert.throws(()=>boardUrl('evil','ABC234','teacher'));assert.throws(()=>boardUrl('prueba','INVALID','teacher'));});
+test('history recovers legacy access and updates the board without storing tokens or names',()=>{const s=storage();s.setItem('room:ABC234:teacher','secret');assert.equal(recentRooms(s)[0].boardId,'prueba');rememberRoom('ABC234','_plantilla',s);assert.equal(recentRooms(s)[0].boardId,'_plantilla');const raw=s.getItem('froebel:recent-rooms');assert(!raw.includes('secret'));assert.deepEqual(Object.keys(JSON.parse(raw)[0]).sort(),['boardId','code','createdAt']);});
+test('malformed history is ignored; forgetting explicitly removes only the selected access',()=>{const s=storage();s.setItem('froebel:recent-rooms','broken');s.setItem('room:ABC234:teacher','secret');s.setItem('room:BCD234:teacher','other');forgetRoom('ABC234',s);assert.equal(s.getItem('room:ABC234:teacher'),null);assert.equal(s.getItem('room:BCD234:teacher'),'other');assert.equal(recentRooms(s).length,1);});

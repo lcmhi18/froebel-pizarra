@@ -143,3 +143,24 @@ describe('E3 room authority and lifecycle',()=>{
 });
 
 
+
+it('E6 switches both editors between independent persisted board states and forbids student switching',async()=>{
+ const f=await fixture(),t=await f.teacher(),s=await active(f,t);
+ try{
+  const first=add('teacher');t.send({type:'ops',ops:[first]});await t.until('ops');await s.c.until('ops');
+  s.c.send({type:'set_board',boardId:'_plantilla'});expect((await s.c.until('error')).code).toBe('FORBIDDEN');
+  t.send({type:'set_board',boardId:'_plantilla'});await t.until('board_changed');await s.c.until('board_changed');await t.until('snapshot_end');await s.c.until('snapshot_end');
+  const second={...add('teacher'),boardId:'_plantilla'};t.send({type:'ops',ops:[second]});await t.until('ops');await s.c.until('ops');
+  t.send({type:'set_board',boardId:'prueba'});await t.until('snapshot_end');await s.c.until('snapshot_end');
+  const chunks=t.frames.filter(m=>m.type==='snapshot_chunk');const original=JSON.parse(chunks.at(-1).data);expect(original.items[first.id]).toBeDefined();expect(original.items[second.id]).toBeUndefined();
+  t.send({type:'set_board',boardId:'_plantilla'});await t.until('snapshot_end');const restored=JSON.parse(t.frames.filter(m=>m.type==='snapshot_chunk').at(-1).data);expect(restored.items[second.id]).toBeDefined();expect(restored.items[first.id]).toBeUndefined();
+ }finally{t.ws.close();s.c.ws.close();}
+});
+it('E6 authenticated pending and active resumes bypass the first-admission three-second limit',async()=>{
+ const f=await fixture(),t=await f.teacher(),ip=freshIP();let c:Client|undefined;
+ try{
+  c=await f.connect('student',{type:'hello',v:1,role:'student',name:'Resume'},ip);const joined=await c.until('joined');await c.until('waiting');c.ws.close();
+  c=await f.connect('student',{type:'hello',v:1,role:'student',studentId:joined.studentId},ip);await c.until('waiting');t.send({type:'accept',studentId:joined.studentId});await c.until('snapshot_end');c.ws.close();
+  c=await f.connect('student',{type:'hello',v:1,role:'student',studentId:joined.studentId},ip);await c.until('snapshot_end');expect(c.closeCode).toBeUndefined();
+ }finally{t.ws.close();c?.ws.close();}
+});

@@ -54,3 +54,7 @@ El lint estático de diseño dio 0 FAIL y 5 WARN por sombras. Se conservan porqu
 - El fallback sin live-slot y la restauración del historial de página tienen implementación, pero no una prueba visual específica en esta ronda.
 
 No quedan hallazgos visuales P0/P1/P2 dentro del alcance de E5. Como P3 quedan futuros detalles de ilustración/marca al portar cada pizarra real. No se generaron imágenes ni se usaron servicios de pago.
+
+## E6 — Entradas y cambio de pizarra
+
+Revisión local por CUA: profesor escritorio y 390 px; alumno 390 px; espera/aceptación; selector con confirmación nativa; ambas páginas SVG navegan según el servidor; cierre/reapertura con estado restaurado. Capturas ignoradas .e6-test/profesor-mobile.jpg y alumno-mobile.jpg revisadas visualmente; sin desbordamiento horizontal. No se cambió la dirección visual de E5 ni se declara implementada la geometría completa. Ver docs/E6.md para evidencia y límites.
