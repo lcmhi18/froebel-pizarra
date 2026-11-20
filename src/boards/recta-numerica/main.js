@@ -4,12 +4,23 @@ import '@fontsource/fredoka/latin-700.css';
 import '../geometria/geometry.css';
 import './style.css';
 import {initialState,formatNumber,adjustMarks,addPin,movePin,removePin,clearLine,adjustFont,columnAt,inside,placementMessage} from './model.js';
+import {NumberLineAdapter} from './adapter';
+import {attachLive} from '../../live/attach';
 
 const byId=id=>document.getElementById(id);
 const node=(tag,text,css)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(css)el.className=css;return el};
 const line=byId('integer-line'),pad=byId('number-pad'),note=byId('number-note');
 let state=initialState(),sign=null,digits='',message='Forma un número con el signo + o − y los dígitos. 🐸',drag=null,ignoreClickUntil=0;
-const readOnly=new URLSearchParams(location.search).has('room');
+const query=new URLSearchParams(location.search),inRoom=!!query.get('room');
+const adapter=new NumberLineAdapter(inRoom&&query.get('role')!=='teacher'?'student':'teacher');
+let live,readOnly=true,noteDirty=false,noteTimer,composing=false;
+const canEditNotes=()=>adapter.canEditNotes;
+function publish(next,final=true){
+ try{const outgoing=noteDirty?{...next,note:adapter.getModel().note}:next;if(!adapter.commit(outgoing,final)){state=adapter.getModel();render();return false;}state=adapter.getModel();if(noteDirty)state.note=noteBlocks();return true;}
+ catch(error){noteDirty=false;clearTimeout(noteTimer);state=adapter.getModel();writeNote(state.note);message=error.message;render();return false;}
+}
+function scheduleNote(){clearTimeout(noteTimer);if(canEditNotes()&&!composing)noteTimer=setTimeout(flushNote,300);}
+function flushNote(){clearTimeout(noteTimer);if(!noteDirty||!canEditNotes()||composing)return;const draft=noteBlocks();noteDirty=false;publish({...adapter.getModel(),note:draft});}
 const ready=()=>digits!==''&&(sign!==null||Number(digits)===0);
 const formed=()=>Number(digits)*(sign==='−'?-1:1);
 
@@ -43,9 +54,9 @@ function render(){renderLine();renderDisplay();note.style.fontSize=state.fs+'px'
 function resetForm(){sign=null;digits='';}
 function place(value){
  if(readOnly||!ready())return;
- const number=formed(),next=addPin(state,number,value,crypto.randomUUID());
+ const number=formed(),next=addPin(state,number,value,live.engine.newId());
  if(next===state){message='La recta admite hasta 200 pines. Quita alguno antes de agregar más.';renderDisplay();return;}
- state=next;resetForm();message=placementMessage(number,value,state.a,state.b);render();
+ if(publish(next)){resetForm();message=placementMessage(number,value,state.a,state.b);render();}
 }
 for(const [label,action,value] of [['+','sign','+'],['−','sign','−'],['⌫','delete',''],...[7,8,9,4,5,6,1,2,3,0].map(value=>[String(value),'digit',String(value)])]){
  const button=node('button',label,action==='digit'&&value==='0'?'key-zero':'');button.type='button';button.dataset.action=action;
@@ -62,7 +73,7 @@ byId('number-keys').addEventListener('click',event=>{
 });
 byId('number-controls').addEventListener('click',event=>{
  if(readOnly)return;const button=event.target.closest('[data-mark]');if(!button)return;
- state=adjustMarks(state,button.dataset.mark,Number(button.dataset.delta));render();
+ publish(adjustMarks(state,button.dataset.mark,Number(button.dataset.delta)));render();
 });
 function highlight(value){line.querySelectorAll('.number-column').forEach(column=>column.classList.toggle('hot',Number(column.dataset.value)===value));}
 function finishDrag(cancel=false,event){
@@ -71,14 +82,14 @@ function finishDrag(cancel=false,event){
   ignoreClickUntil=Date.now()+500;
   const value=event?columnAt(line.getBoundingClientRect(),state.a,state.b,event.clientX,event.clientY):null;
   if(current.pin){
-   if(!cancel&&event&&inside(pad.getBoundingClientRect(),event.clientX,event.clientY))state=removePin(state,current.pin.id);
-   else if(cancel||value===null)state=movePin(state,current.pin.id,current.pin.v);
-   else state=movePin(state,current.pin.id,value);
+   if(!cancel&&event&&inside(pad.getBoundingClientRect(),event.clientX,event.clientY))publish(removePin(state,current.pin.id));
+   else if(cancel||value===null)publish(movePin(state,current.pin.id,current.pin.v));
+   else publish(movePin(state,current.pin.id,value));
    message='Puedes mover otro pin o formar un nuevo número. 🐸';render();
   }else if(!cancel&&value!==null)place(value);
   else{message='Suelta el número sobre una marca de la recta. 🐸';renderDisplay();}
  }else if(!cancel){
-  if(current.pin){state=removePin(state,current.pin.id);ignoreClickUntil=Date.now()+500;render();}
+  if(current.pin){publish(removePin(state,current.pin.id));ignoreClickUntil=Date.now()+500;render();}
   else{message='Ahora toca en la recta el lugar donde va '+formatNumber(formed())+'. 👆';renderDisplay();}
  }
 }
@@ -101,23 +112,23 @@ window.addEventListener('pointermove',event=>{
  drag.ghost.style.left=event.clientX+'px';drag.ghost.style.top=event.clientY+'px';
  const value=columnAt(line.getBoundingClientRect(),state.a,state.b,event.clientX,event.clientY);highlight(value);
  pad.classList.toggle('drop-target',!!drag.pin&&inside(pad.getBoundingClientRect(),event.clientX,event.clientY));
- if(drag.pin&&value!==null){state=movePin(state,drag.pin.id,value);renderLine();highlight(value);}
+ if(drag.pin&&value!==null){publish(movePin(state,drag.pin.id,value),false);renderLine();highlight(value);}
 });
 window.addEventListener('pointerup',event=>{if(drag?.pointerId===event.pointerId)finishDrag(false,event);});
 window.addEventListener('pointercancel',event=>{if(drag?.pointerId===event.pointerId)finishDrag(true,event);});
 window.addEventListener('blur',()=>finishDrag(true));
 line.addEventListener('click',event=>{
  if(readOnly||Date.now()<ignoreClickUntil)return;
- const pin=event.target.closest('[data-pin]');if(pin){state=removePin(state,pin.dataset.pin);render();return;}
+ const pin=event.target.closest('[data-pin]');if(pin){publish(removePin(state,pin.dataset.pin));render();return;}
  const column=event.target.closest('[data-value]');if(!column)return;
  if(ready())place(Number(column.dataset.value));else{message='Primero forma un número con los botones. 🐸';renderDisplay();}
 });
 byId('number-layout').addEventListener('dragstart',event=>{if(!event.target.closest('#number-note'))event.preventDefault();});
 byId('number-help').onclick=()=>{message='💡 Los positivos van a la derecha del 0 y los negativos a la izquierda. Puedes colocar un número en cualquier marca y la rana te orientará.';renderDisplay();};
-for(const [id,delta] of [['font-smaller',-2],['font-larger',2]])byId(id).onclick=()=>{if(!readOnly){state=adjustFont(state,delta);render();}};
+for(const [id,delta] of [['font-smaller',-2],['font-larger',2]])byId(id).onclick=()=>{if(canEditNotes()){flushNote();publish(adjustFont(state,delta));render();}};
 byId('clear-line').onclick=()=>{if(!readOnly)byId('clear-dialog').showModal();};
 byId('cancel-clear').onclick=()=>byId('clear-dialog').close();
-byId('confirm-clear').onclick=()=>{if(readOnly)return;finishDrag(true);state=clearLine(state);resetForm();message='Recta limpia. Forma un nuevo número. 🐸';byId('clear-dialog').close();render();};
+byId('confirm-clear').onclick=()=>{if(readOnly)return;finishDrag(true);publish(clearLine(state));resetForm();message='Recta limpia. Forma un nuevo número. 🐸';byId('clear-dialog').close();render();};
 for(const [id,css,controls,label] of [['hide-upper','hide-number-upper','number-controls','superior'],['hide-lower','hide-number-lower','number-notes','inferior']])byId(id).onclick=()=>{
  const hidden=document.body.classList.toggle(css);byId(id).textContent=`${hidden?'Mostrar':'Ocultar'} menú ${label}`;byId(id).setAttribute('aria-expanded',String(!hidden));
 };
@@ -134,21 +145,41 @@ function noteBlocks(){
  };
  visit(note);flush();return blocks;
 }
-note.addEventListener('input',()=>{if(!readOnly)state={...state,note:noteBlocks()};});
+function writeNote(blocks){
+ const selection=window.getSelection?.();let offset=null;
+ if(selection?.rangeCount&&note.contains(selection.anchorNode)){const prefix=selection.getRangeAt(0).cloneRange();prefix.selectNodeContents(note);prefix.setEnd(selection.anchorNode,selection.anchorOffset);offset=prefix.toString().length;}
+ note.replaceChildren(...blocks.map(block=>{if(block.k==='t')return document.createTextNode(block.v);const image=node('img');image.src=block.src;image.alt='Imagen de las notas del profesor';return image;}));
+ if(offset!==null){const walker=document.createTreeWalker(note,NodeFilter.SHOW_TEXT);let text;while((text=walker.nextNode())){if(offset<=text.textContent.length){const range=document.createRange();range.setStart(text,offset);range.collapse(true);selection.removeAllRanges();selection.addRange(range);return;}offset-=text.textContent.length;}const range=document.createRange();range.selectNodeContents(note);range.collapse(false);selection.removeAllRanges();selection.addRange(range);}
+}
+note.addEventListener('input',()=>{if(canEditNotes()){noteDirty=true;state={...state,note:noteBlocks()};scheduleNote();}});
+note.addEventListener('compositionstart',()=>{composing=true;clearTimeout(noteTimer);});
+note.addEventListener('compositionend',()=>{composing=false;scheduleNote();});
+note.addEventListener('blur',flushNote);
 note.addEventListener('drop',event=>event.preventDefault());
 note.addEventListener('paste',async event=>{
- event.preventDefault();if(readOnly)return;const clipboard=event.clipboardData;if(!clipboard)return;
+ event.preventDefault();if(!canEditNotes())return;const clipboard=event.clipboardData;if(!clipboard)return;
  const files=Array.from(clipboard.files||[]);
  if(files.length){
   for(const file of files){
    if(!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>300*1024){message='Pega una imagen PNG, JPEG, WebP o GIF de hasta 300 KB.';renderDisplay();continue;}
-   const src=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});
-   const image=node('img');image.src=src;image.alt='Imagen pegada en las notas';note.append(image);state={...state,note:noteBlocks()};
+   try{const src=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});if(!canEditNotes())return;
+   const image=node('img');image.src=src;image.alt='Imagen pegada en las notas';note.append(image);noteDirty=true;state={...state,note:noteBlocks()};scheduleNote();}catch{message='No se pudo leer la imagen. Intenta pegarla de nuevo.';renderDisplay();}
   }return;
  }
  const text=clipboard.getData('text/plain');if(text){
-  note.focus();if(!document.execCommand('insertText',false,text))note.append(document.createTextNode(text));state={...state,note:noteBlocks()};
+  note.focus();if(!document.execCommand('insertText',false,text))note.append(document.createTextNode(text));noteDirty=true;state={...state,note:noteBlocks()};scheduleNote();
  }
 });
-if(readOnly){byId('number-status').hidden=false;byId('number-status').textContent='La conexión de esta pizarra a la sala se prepara en la siguiente etapa.';note.contentEditable='false';document.querySelectorAll('#number-controls button,#number-layout button').forEach(button=>button.disabled=true);}
-render();
+function updateFromAdapter(){
+ readOnly=adapter.readOnly;if(readOnly){clearTimeout(noteTimer);if(drag){const ghost=drag.ghost;drag=null;ghost?.remove();highlight(null);pad.classList.remove('drop-target');}byId('clear-dialog').close();}
+ state=adapter.getModel();if(noteDirty&&adapter.role==='teacher')state.note=noteBlocks();
+ else if(JSON.stringify(noteBlocks())!==JSON.stringify(state.note))writeNote(state.note);
+ note.contentEditable=String(canEditNotes());byId('font-smaller').disabled=!canEditNotes();byId('font-larger').disabled=!canEditNotes();
+ document.querySelectorAll('#number-controls button,#number-keys button').forEach(button=>button.disabled=readOnly);byId('clear-line').disabled=readOnly;
+ render();if(noteDirty&&canEditNotes())scheduleNote();
+}
+adapter.subscribe(updateFromAdapter);window.FroebelBoard={id:'recta-numerica',adapter};
+live=attachLive(adapter,{boardId:'recta-numerica',workspace:byId('number-line-workspace'),slot:byId('live-slot')});
+live.subscribe(view=>{const status=byId('number-status');status.hidden=view.status==='active'&&!view.error;status.textContent=view.error||(view.status==='waiting'?'Esperando la aceptación del profesor…':view.status==='paused'?'El profesor se desconectó. La recta está en pausa.':'Conectando a la sala…');});
+if(live.mode==='solo'){const button=node('button','Clase');button.onclick=()=>location.assign('/profesor/?board=recta-numerica');byId('live-slot').append(button);}
+updateFromAdapter();

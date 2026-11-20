@@ -3,6 +3,14 @@ import assert from 'node:assert/strict';
 import { RoomConnection } from '../../.live-test/unit/live/connection.js';
 import { TestBoardAdapter } from '../../.live-test/unit/boards/prueba/adapter.js';
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+test('teacher transport fragments a large note and reconciles its single authoritative echo',async t=>{
+ const {connection,adapter,ready}=harness(t);const ws=await ready(),note=[{k:'t',v:'Texto 🐸'.repeat(15000)}];
+ adapter.change(state=>{state.fields.note=note});await until(()=>ws.sent.some(frame=>frame.type==='ops_chunk'));
+ const parts=ws.sent.filter(frame=>frame.type==='ops_chunk');assert(parts.length>1);
+ for(const frame of parts)assert(new TextEncoder().encode(JSON.stringify(frame)).length<=64000);
+ const operation=JSON.parse(parts.map(frame=>frame.data).join('')).ops[0];assert.deepEqual(operation.value,note);
+ ws.receive({type:'ops',ops:[{...operation,seq:1}]});assert.equal(connection.engine.pendingCount,0);assert.deepEqual(adapter.getState().fields.note,note);
+});
 async function until(check){for(let i=0;i<100;i++){if(check())return;await pause(5);}throw Error('Transport condition timeout');}
 function harness(t,options={}){
  const saved=new Map();for(const key of ['WebSocket','fetch','location','sessionStorage','localStorage'])saved.set(key,Object.getOwnPropertyDescriptor(globalThis,key));

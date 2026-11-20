@@ -22,9 +22,20 @@ Verificado con pruebas locales de WebSocket/SQLite, incluidos mensajes prohibido
 
 Limitación a resolver al integrar notas: el protocolo mantiene su tope existente de 64 KB por mensaje de cliente. La validación de imágenes de hasta 300 KB no elimina ese límite de transporte; las notas grandes todavía no cuentan con un mecanismo de envío compatible. No se modificaron estos límites ni se añadió almacenamiento externo.
 
-## Etapas pendientes, cada una con aprobación
+## Etapa 3: adapter y conexión al motor existente
 
-3. Adapter y conexión al motor existente: identificadores del motor, actualizaciones durante los arrastres, notas con debounce y restricciones del alumno.
-4. Pruebas de sala, revisión visual disponible y publicación del conjunto.
+La entrada ya utiliza `NumberLineAdapter` y `attachLive`, tanto en modo personal como con `?room`. Se reutilizan el motor, la conexión, el panel y las reglas de sala. Los pines usan identificadores del motor y su payload contiene únicamente `t/n/v`; moverlos cambia solo `v`. Formar el número y los mensajes de ayuda permanecen locales. Los arrastres usan el throttle de 40 ms del motor y publican su posición final. Si se cancela un arrastre que ya difundió posiciones intermedias, se publica la posición original para que los demás participantes también recuperen el pin.
+
+Las notas se envían con debounce de 300 ms y se conservan durante cambios de marcas y redibujados. Los ecos propios no reemplazan el contenido del editor ni su nodo. El alumno recibe notas y tamaño de letra, pero no los puede editar. Pendiente, pausa y cierre bloquean la edición mediante el motor y el adapter.
+
+Para conservar los 64 KB por mensaje y admitir imágenes de hasta 300 KB, el protocolo v1 incorpora el mensaje aditivo `ops_chunk`. Solo el profesor puede subir fragmentos; una carga por socket, ordenada, con máximo de estado de 1 MB más 64 KB de envoltorio y caducidad de 30 segundos. Los fragmentos se guardan temporalmente en SQLite, sobreviven a hibernación y se borran al completarse, caducar, cambiar de pizarra o desconectarse. No se incorporan servicios ni almacenamiento externo. Al ensamblarse, la operación pasa por la autenticación, permisos, límites y transacción habituales; los clientes antiguos siguen enviando `ops` normales. Los fragmentos conservan pares de sustitutos Unicode completos.
+
+Verificación local: `npm run build` correcto; `test:recta` 17 pruebas, `test:e5` 15, `test:e2` 61 y `test:engine` 24: **117 pruebas correctas**. Incluyen adapter y motor reales conectados por WebSocket con el Worker local, movimiento de un pin ajeno, notas, limpieza, restauración al cambiar de pizarra y pausa al desconectar al profesor. También incluyen carga fragmentada con hibernación, expiración, alumno prohibido, fragmentos incompletos, imagen de 300 KB y rechazo de notas inválidas. La prueba de imagen comprueba transporte y validación de cabecera/tamaño, no decodificación visual. Las pruebas de interacción usan un DOM simulado explícito; no equivalen a una prueba de navegador.
+
+No se ha realizado revisión visual real ni probado el portapapeles nativo: el navegador local continúa no disponible para la herramienta. Esta etapa queda guardada localmente, sin push ni despliegue.
+
+## Etapa pendiente, con aprobación
+
+4. Verificación final de sala, revisión visual si está disponible y publicación del conjunto.
 
 La revisión visual real y las pruebas de sala no forman parte de los resultados automáticos de esta primera etapa. El proyecto no contiene actualmente la carpeta `app/`.

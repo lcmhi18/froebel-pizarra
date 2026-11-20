@@ -1,11 +1,13 @@
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import * as model from '../../src/boards/recta-numerica/model.js';
+import {NumberLineAdapter} from '../../.live-test/unit/boards/recta-numerica/adapter.js';
+import {RoomEngine} from '../../.live-test/unit/live/engine.js';
 
 // Explicit in-memory DOM for event/gesture tests. This does not launch a browser
 // or claim to verify CSS layout, image decoding or native clipboard behavior.
-export function uiHarness(){
- const ids=new Map();let serial=0,time=1000;
+export function uiHarness(role='teacher',room=false){
+ const ids=new Map(),timers=new Map(),sent=[];let serial=0,time=1000,timerId=0,engine;
  class Element{
   constructor(tag='div',id=''){
    this.tagName=tag.toUpperCase();this.nodeName=this.tagName;this.nodeType=1;this.id=id;this.dataset={};this.attrs={};this.childNodes=[];this.events={};this.classes=new Set();this.disabled=false;
@@ -21,6 +23,8 @@ export function uiHarness(){
   setAttribute(key,value){this.attrs[key]=String(value)}
   addEventListener(type,fn){(this.events[type]??=[]).push(fn)}
   matches(selector){
+   if(selector.includes(','))return selector.split(',').some(part=>this.matches(part.trim()));
+   if(selector.includes(' ')){const [parent,child]=selector.split(' ');return this.matches(child)&&!!this.parentElement?.closest(parent);}
    if(selector.startsWith('#'))return this.id===selector.slice(1);
    if(selector.startsWith('.'))return this.classes.has(selector.slice(1));
    const data=/^\[data-([\w-]+)(?:="([^"]*)")?\]$/.exec(selector);
@@ -34,14 +38,17 @@ export function uiHarness(){
  }
  const body=new Element('body');
  const make=(id,parent=body,tag='div')=>{const element=new Element(tag,id);parent.append(element);return element};
- const top=make('top'),main=make('number-line-workspace'),controls=make('number-controls',main),layout=make('number-layout',main),board=make('number-board',layout),pad=make('number-pad',layout),notes=make('number-notes',board),dialog=make('clear-dialog');
+ const top=make('top'),main=make('number-line-workspace'),controls=make('number-controls',main),layout=make('number-layout',main),board=make('number-board',layout),pad=make('number-pad',layout),notes=make('number-notes',board),dialog=make('clear-dialog');make('live-slot',top);
  make('integer-line',board);make('number-note',notes);make('number-display',pad);make('number-keys',pad);make('number-status',main);make('frog-message',layout);make('font-size',notes);make('negative-count',controls);make('positive-count',controls);
  for(const id of ['hide-upper','hide-lower','large-board'])make(id,top,'button');
  for(const id of ['font-smaller','font-larger','clear-line'])make(id,notes,'button');
  make('number-help',layout,'button');make('cancel-clear',dialog,'button');make('confirm-clear',dialog,'button');
  for(const side of ['a','b'])for(const delta of [-1,1]){const button=make(side+delta,controls,'button');button.dataset={mark:side,delta:String(delta)}}
  const windowEvents=new Map();
- const context=vm.createContext({...model,URLSearchParams,structuredClone,Date:class extends Date{static now(){return time}},crypto:{randomUUID:()=>`solo-${++serial}`},location:{search:''},document:{body,getElementById:id=>ids.get(id)||body.querySelectorAll('#'+id)[0],createElement:tag=>new Element(tag),createDocumentFragment:()=>new Element('#fragment'),createTextNode:text=>({nodeType:3,textContent:text}),querySelectorAll:selector=>body.querySelectorAll(selector)},window:{getSelection:()=>({removeAllRanges(){}}),addEventListener:(type,fn)=>{const callbacks=windowEvents.get(type)||[];callbacks.push(fn);windowEvents.set(type,callbacks)}}});
+ const context=vm.createContext({...model,NumberLineAdapter:class extends NumberLineAdapter{commit(model,final){return super.commit(structuredClone(model),final)}},attachLive:adapter=>{
+  let seq=0;engine=new RoomEngine(adapter,ops=>{sent.push(...ops);engine.receive(ops.map(op=>({...op,seq:++seq})))},{boardId:'recta-numerica'});engine.identity(role==='teacher'?'teacher':'u-student');engine.snapshot(adapter.getState(),0);engine.setReadOnly(false);
+  return {engine,mode:room?'room':'solo',subscribe(callback){if(room)callback({status:'active',error:''});return()=>{};}};
+ },URLSearchParams,structuredClone,setTimeout:(fn,delay)=>{const id=++timerId;timers.set(id,{fn,at:time+delay});return id},clearTimeout:id=>timers.delete(id),Date:class extends Date{static now(){return time}},crypto:{randomUUID:()=>`solo-${++serial}`},location:{search:room?'?room=ABC234&role='+role:'',assign(){}},document:{body,getElementById:id=>ids.get(id)||body.querySelectorAll('#'+id)[0],createElement:tag=>new Element(tag),createDocumentFragment:()=>new Element('#fragment'),createTextNode:text=>({nodeType:3,textContent:text}),querySelectorAll:selector=>body.querySelectorAll(selector)},window:{getSelection:()=>({removeAllRanges(){}}),addEventListener:(type,fn)=>{const callbacks=windowEvents.get(type)||[];callbacks.push(fn);windowEvents.set(type,callbacks)}}});
  const source=readFileSync('src/boards/recta-numerica/main.js','utf8').replace(/^import .*;\r?$/gm,'');
  vm.runInContext(source+'\nthis.inspect=()=>structuredClone({state,sign,digits,message});',context,{timeout:2000});
  const dispatch=(target,type,extra={})=>{
@@ -50,5 +57,5 @@ export function uiHarness(){
   for(const el of ancestors){for(const callback of el.events[type]||[])callback(event);el['on'+type]?.(event)}
   for(const callback of windowEvents.get(type)||[])callback(event);
  };
- return {id:id=>ids.get(id)||body.querySelectorAll('#'+id)[0],find:selector=>body.querySelectorAll(selector)[0],click(target){dispatch(target,'click')},pointer(type,target,x,y){dispatch(target,type,{clientX:x,clientY:y})},inspect:()=>context.inspect(),tick(n=600){time+=n},input(text){const note=ids.get('number-note');note.replaceChildren({nodeType:3,textContent:text});dispatch(note,'input')}};
+ return {sent,adapter:context.window.FroebelBoard.adapter,dispose:()=>engine.dispose(),id:id=>ids.get(id)||body.querySelectorAll('#'+id)[0],find:selector=>body.querySelectorAll(selector)[0],click(target){dispatch(target,'click')},pointer(type,target,x,y){dispatch(target,type,{clientX:x,clientY:y})},inspect:()=>context.inspect(),tick(n=600){time+=n;for(const [id,timer] of [...timers])if(timer.at<=time){timers.delete(id);timer.fn()}},input(text){const note=ids.get('number-note');note.replaceChildren({nodeType:3,textContent:text});dispatch(note,'input')}};
 }

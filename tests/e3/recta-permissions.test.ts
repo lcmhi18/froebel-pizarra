@@ -1,9 +1,10 @@
-import {SELF,runInDurableObject} from 'cloudflare:test';
+import {SELF,runInDurableObject,evictDurableObject,runDurableObjectAlarm} from 'cloudflare:test';
 import {env as bindings} from 'cloudflare:workers';
 import {afterEach,expect,it} from 'vitest';
 import type {Env} from '../../worker/protocol';
 import type {Room} from '../../worker/room';
-import type {BoardState} from '../../src/shared/protocol';
+import type {BoardState,Op} from '../../src/shared/protocol';
+import {operationFrames} from '../../src/shared/transport';
 const env=bindings as Env,origin='http://localhost:5174';let serial=0;
 const clients:Client[]=[];
 class Client{
@@ -36,6 +37,39 @@ for(const field of ['note','fs'])it(`server refuses student ${field} changes wit
  const {teacher,student}=await fixture();const before=await teacher.snapshot();
  await student.rejected({kind:'field',field,value:field==='fs'?24:[{k:'t',v:'No permitido'}]},'FORBIDDEN');
  expect(await teacher.snapshot()).toEqual(before);
+});
+it('large Unicode notes survive fragment upload and Durable Object hibernation',async()=>{
+ const {teacher,student,stub}=await fixture();
+ const note=[{k:'t',v:'Álgebra 🐸\n'.repeat(12000)}],operation=teacher.operation({kind:'field',field:'note',value:note}) as Op;
+ const frames=operationFrames(operation);expect(frames.length).toBeGreaterThan(1);teacher.send(frames[0]);
+ // A ping follows the first fragment on the same ordered WebSocket.
+ await teacher.snapshot();
+ await runInDurableObject(stub,(_room,state)=>{expect(state.storage.sql.exec<{received:number}>('SELECT received FROM op_uploads').toArray()[0].received).toBe(1)});
+ await evictDurableObject(stub);
+ for(const frame of frames.slice(1))teacher.send(frame);
+ expect((await student.next('ops',frame=>frame.ops[0].opId===operation.opId)).ops[0].value).toEqual(note);
+ expect((await teacher.snapshot()).state.fields.note).toEqual(note);
+ await runInDurableObject(stub,(_room,state)=>{expect(state.storage.sql.exec('SELECT * FROM op_upload_parts').toArray()).toHaveLength(0)});
+});
+it('fragment uploads forbid students, reject missing parts, and expire without changing state',async()=>{
+ const {teacher,student,stub}=await fixture(),before=await teacher.snapshot();
+ const operation=teacher.operation({kind:'field',field:'note',value:[{k:'t',v:'x'.repeat(70000)}]}) as Op,frames=operationFrames(operation);
+ student.send(frames[0]);expect((await student.next('error')).code).toBe('FORBIDDEN');
+ teacher.send(frames[1]);expect((await teacher.next('error')).code).toBe('BAD_MESSAGE');
+ teacher.send(frames[0]);await teacher.snapshot();
+ await runInDurableObject(stub,(_room,state)=>{state.storage.sql.exec('UPDATE op_uploads SET expires=?',Date.now()-1)});await runDurableObjectAlarm(stub);
+ teacher.send(frames[1]);expect((await teacher.next('error')).code).toBe('BAD_MESSAGE');
+ expect(await teacher.snapshot()).toEqual(before);
+});
+it('a 300 KB image reaches students in bounded frames; invalid assembled notes are rejected',async()=>{
+ const {teacher,student}=await fixture();
+ const image='data:image/png;base64,'+btoa('\x89PNG\r\n\x1a\n'+'x'.repeat(300*1024-8));
+ const operation=teacher.operation({kind:'field',field:'note',value:[{k:'i',src:image}]}) as Op;
+ for(const frame of operationFrames(operation))teacher.send(frame);
+ expect((await student.next('ops',frame=>frame.ops[0].opId===operation.opId)).ops[0].value).toEqual([{k:'i',src:image}]);
+ const before=await teacher.snapshot(),invalid=teacher.operation({kind:'field',field:'note',value:[{k:'i',src:'data:image/png;base64,'+btoa('x'.repeat(70000))}]}) as Op;
+ for(const frame of operationFrames(invalid))teacher.send(frame);
+ expect((await teacher.next('error',frame=>frame.ref===invalid.opId)).code).toBe('BAD_MESSAGE');expect(await teacher.snapshot()).toEqual(before);
 });
 it('server rejects pin number edits and out-of-range pin positions',async()=>{
  const {teacher,student}=await fixture(),id=teacher.author+':pin';

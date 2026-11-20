@@ -1,6 +1,7 @@
 import type { BoardAdapter } from './BoardAdapter';
 import { RoomEngine } from './engine';
 import { isRoomCode,sanitizeFirstName,type BoardId,type BoardState,type Op,type ServerMessage,type Student } from '../shared/protocol';
+import {operationFrames} from '../shared/transport';
 
 export const API=(import.meta.env?.VITE_ROOM_API_URL||'').replace(/\/$/,'');
 export type RoomOptions={code:string;role:'teacher'|'student';name?:string;teacherToken?:string;boardId?:BoardId};
@@ -37,7 +38,7 @@ export class RoomConnection{
   if(!this.ready||this.paused||this.ws?.readyState!==WebSocket.OPEN)return;
   const batch:Op[]=[];
   for(const op of this.outgoing.values()){
-   if(new TextEncoder().encode(JSON.stringify({type:'ops',ops:[...batch,op]})).length>64000){if(!batch.length){this.outgoing.delete(op.opId);this.engine.reject();this.update({error:'El cambio es demasiado grande para enviarlo.'});}break;}
+   if(new TextEncoder().encode(JSON.stringify({type:'ops',ops:[...batch,op]})).length>64000){if(!batch.length){this.outgoing.delete(op.opId);try{if(this.options.role!=='teacher')throw Error();for(const frame of operationFrames(op))this.send(frame);}catch{this.engine.reject();this.update({error:'El cambio es demasiado grande para enviarlo.'});}}break;}
    batch.push(op);if(batch.length>=2)break;
   }
   if(batch.length){batch.forEach(op=>this.outgoing.delete(op.opId));this.send({type:'ops',ops:batch});}

@@ -28,7 +28,7 @@
     "test:geometry": "node scripts/test-geometry.mjs",
     "test:arithmetic": "node --test tests/arithmetic/*.test.mjs",
     "test:reasoning": "node --test tests/reasoning/*.test.mjs",
-    "test:recta": "node --test tests/recta/*.test.mjs",
+    "test:recta": "node scripts/test-recta.mjs",
     "test:e9": "npm run test:e8 && npm run test:geometry",
     "test:equivalence": "node scripts/test-equivalence.mjs",
     "test:e10": "npm run test:e9 && npm run test:equivalence",

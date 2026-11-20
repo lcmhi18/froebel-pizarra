@@ -23,6 +23,7 @@ export type ClientMessage =
   | {type:'hello';v:1;role:'teacher';token:string}
   | {type:'hello';v:1;role:'student';studentId?:string;name?:string}
   | {type:'ping'} | {type:'ops';ops:Op[]}
+  | {type:'ops_chunk';uploadId:string;boardId:BoardId;index:number;total:number;data:string}
   | {type:'resync_request';fromSeq:number}
   | {type:'accept'|'reject'|'kick';studentId:string}
   | {type:'set_board';boardId:BoardId}
@@ -89,6 +90,7 @@ export function validateClientMessage(message:unknown):Validation<ClientMessage>
       if(!isBoardId(message.boardId))return {ok:false,code:'UNKNOWN_BOARD'};
       break;
     case 'ops':if(!keys(message,['type','ops'])||!Array.isArray(message.ops)||message.ops.length<1||message.ops.length>LIMITS.opsBurst||!message.ops.every(validateOperation))return bad();break;
+    case 'ops_chunk':if(!keys(message,['type','uploadId','boardId','index','total','data'])||!safeKey(message.uploadId)||!isBoardId(message.boardId)||!seq(message.index)||!seq(message.total)||message.total<1||message.total>512||message.index>=message.total||typeof message.data!=='string'||message.data.length<1||message.data.length>4096)return bad();break;
     default:return bad();
   }
   return {ok:true,value:message as ClientMessage};

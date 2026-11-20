@@ -2,6 +2,8 @@ import { DurableObject } from 'cloudflare:workers';
 import { applyOp, emptyState, matches, json, hash, parseClientFrame, LIMITS, CLOSE_CODES, sanitizeFirstName, isBoardId, type Env, type LegacyOp, type BoardState, type Op, type BoardId, type ErrorCode } from './protocol';
 import { applyOperation } from '../src/shared/operations';
 import {boardOperationError,boardStateError} from '../src/shared/permissions';
+import {UPLOAD_MAX_BYTES,UPLOAD_TTL_MS} from '../src/shared/transport';
+import {validateClientMessage,type ClientMessage} from '../src/shared/protocol';
 
 type Attachment={socketId:string;authed:boolean;role?:'teacher'|'student';studentId?:string;ipHash:string};
 type Meta={code:string;room:string;teacher_token_hash:string;closed:number;created_at:number;board_id:BoardId;seq:number;grace_at:number|null;purge_at:number|null;notify_at:number|null;next_alarm_kind:string|null;next_alarm_at:number|null};
@@ -45,6 +47,8 @@ export class Room extends DurableObject<Env>{
     this.sql.exec('CREATE TABLE IF NOT EXISTS tombstones(board_id TEXT,id TEXT,PRIMARY KEY(board_id,id))');
     this.sql.exec('CREATE TABLE IF NOT EXISTS sessions(socket_id TEXT PRIMARY KEY,role TEXT,student_id TEXT)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS auth_deadlines(socket_id TEXT PRIMARY KEY,deadline INTEGER,busy INTEGER DEFAULT 0)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS op_uploads(socket_id TEXT PRIMARY KEY,upload_id TEXT,board_id TEXT,total INTEGER,received INTEGER,bytes INTEGER,expires INTEGER)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS op_upload_parts(socket_id TEXT,part_index INTEGER,data TEXT,PRIMARY KEY(socket_id,part_index))');
   }
   meta(){return this.purged?undefined:this.sql.exec<Meta>('SELECT * FROM meta').toArray()[0];}
   attachment(ws:WebSocket){try{return ws.deserializeAttachment() as Attachment|undefined;}catch{return undefined;}}
@@ -55,7 +59,22 @@ export class Room extends DurableObject<Env>{
   private current(a:Attachment){return !!this.sql.exec('SELECT socket_id FROM sessions WHERE socket_id=?',a.socketId).toArray().length;}
   private editable(a:Attachment){return a.authed&&this.current(a)&&(a.role==='teacher'||this.student(a.studentId)?.status==='active');}
   private eachEditor(fn:(ws:WebSocket)=>void){for(const ws of this.ctx.getWebSockets()){const a=this.attachment(ws);if(a&&this.editable(a))fn(ws);}}
-  private retire(ws:WebSocket,code:number,reason:string){const a=this.attachment(ws);if(a?.socketId){this.sql.exec('DELETE FROM sessions WHERE socket_id=?',a.socketId);this.sql.exec('DELETE FROM auth_deadlines WHERE socket_id=?',a.socketId);a.authed=false;ws.serializeAttachment(a);this.buckets.delete(a.socketId);}try{ws.close(code,reason);}catch{}}
+  private clearUpload(socketId:string){this.sql.exec('DELETE FROM op_upload_parts WHERE socket_id=?',socketId);this.sql.exec('DELETE FROM op_uploads WHERE socket_id=?',socketId);}
+  private receiveUpload(ws:WebSocket,a:Attachment,part:Extract<ClientMessage,{type:'ops_chunk'}>):Extract<ClientMessage,{type:'ops'}>|null{
+    const fail=(code:ErrorCode)=>{this.clearUpload(a.socketId);this.error(ws,code,part.uploadId);return null;};
+    if(!part.uploadId.startsWith('teacher:')||part.boardId!==this.meta()?.board_id)return fail('FORBIDDEN');
+    if(part.index===0){this.clearUpload(a.socketId);this.sql.exec('INSERT INTO op_uploads VALUES(?,?,?,?,?,?,?)',a.socketId,part.uploadId,part.boardId,part.total,0,0,Date.now()+UPLOAD_TTL_MS);}
+    const upload=this.sql.exec<{upload_id:string;board_id:string;total:number;received:number;bytes:number;expires:number}>('SELECT * FROM op_uploads WHERE socket_id=?',a.socketId).toArray()[0];
+    if(!upload||upload.upload_id!==part.uploadId||upload.board_id!==part.boardId||upload.total!==part.total||upload.received!==part.index||upload.expires<=Date.now())return fail('BAD_MESSAGE');
+    const size=upload.bytes+bytes(part.data);if(size>UPLOAD_MAX_BYTES)return fail('STATE_TOO_LARGE');
+    this.ctx.storage.transactionSync(()=>{this.sql.exec('INSERT INTO op_upload_parts VALUES(?,?,?)',a.socketId,part.index,part.data);this.sql.exec('UPDATE op_uploads SET received=received+1,bytes=? WHERE socket_id=?',size,a.socketId);});
+    void this.schedule().catch(()=>{});
+    if(part.index+1<part.total)return null;
+    const text=this.sql.exec<{data:string}>('SELECT data FROM op_upload_parts WHERE socket_id=? ORDER BY part_index',a.socketId).toArray().map(row=>row.data).join('');this.clearUpload(a.socketId);
+    try{const parsed=validateClientMessage(JSON.parse(text));if(parsed.ok&&parsed.value.type==='ops'&&parsed.value.ops.length===1&&parsed.value.ops[0].opId===part.uploadId&&parsed.value.ops[0].boardId===part.boardId)return parsed.value;}catch{}
+    return fail('BAD_MESSAGE');
+  }
+  private retire(ws:WebSocket,code:number,reason:string){const a=this.attachment(ws);if(a?.socketId){this.clearUpload(a.socketId);this.sql.exec('DELETE FROM sessions WHERE socket_id=?',a.socketId);this.sql.exec('DELETE FROM auth_deadlines WHERE socket_id=?',a.socketId);a.authed=false;ws.serializeAttachment(a);this.buckets.delete(a.socketId);}try{ws.close(code,reason);}catch{}}
   private load(boardId:BoardId){
     const row=this.sql.exec<{json:string;seq:number}>('SELECT json,seq FROM state WHERE board_id=?',boardId).toArray()[0];
     const state:BoardState=row?JSON.parse(row.json):emptyState();
@@ -82,7 +101,8 @@ export class Room extends DurableObject<Env>{
   private async schedule(){
     const m=this.meta();if(!m)return;
     const auth=this.sql.exec<{at:number|null}>('SELECT min(deadline) AS at FROM auth_deadlines').toArray()[0]?.at;
-    const candidates=[{kind:'auth',at:auth},{kind:'grace',at:m.closed?null:m.grace_at},{kind:'purge',at:m.purge_at},{kind:'notify',at:m.notify_at}].filter((r):r is {kind:string;at:number}=>typeof r.at==='number').sort((a,b)=>a.at-b.at);
+    const upload=this.sql.exec<{at:number|null}>('SELECT min(expires) AS at FROM op_uploads').toArray()[0]?.at;
+    const candidates=[{kind:'auth',at:auth},{kind:'upload',at:upload},{kind:'grace',at:m.closed?null:m.grace_at},{kind:'purge',at:m.purge_at},{kind:'notify',at:m.notify_at}].filter((r):r is {kind:string;at:number}=>typeof r.at==='number').sort((a,b)=>a.at-b.at);
     const next=candidates[0];this.sql.exec('UPDATE meta SET next_alarm_kind=?,next_alarm_at=?',next?.kind||null,next?.at||null);
     if(next)await this.ctx.storage.setAlarm(next.at);else await this.ctx.storage.deleteAlarm();
   }
@@ -99,6 +119,7 @@ export class Room extends DurableObject<Env>{
   async alarm(){
     const m=this.meta();if(!m)return;const now=Date.now();
     if(m.closed&&m.purge_at&&m.purge_at<=now){await this.ctx.storage.deleteAlarm();await this.ctx.storage.deleteAll();this.purged=true;this.buckets.clear();return;}
+    for(const row of this.sql.exec<{socket_id:string}>('SELECT socket_id FROM op_uploads WHERE expires<=?',now).toArray())this.clearUpload(row.socket_id);
     for(const row of this.sql.exec<{socket_id:string}>('SELECT socket_id FROM auth_deadlines WHERE deadline<=?',now)){
       const ws=this.ctx.getWebSockets().find(ws=>this.attachment(ws)?.socketId===row.socket_id);
       if(ws)this.retire(ws,CLOSE_CODES.AUTH_TIMEOUT,'AUTH_TIMEOUT');else this.sql.exec('DELETE FROM auth_deadlines WHERE socket_id=?',row.socket_id);
@@ -179,7 +200,7 @@ export class Room extends DurableObject<Env>{
   async webSocketMessage(ws:WebSocket,frame:string|ArrayBuffer){
     const a=this.attachment(ws),m=this.meta();if(!a?.socketId||!m||m.closed){this.retire(ws,CLOSE_CODES.ROOM_CLOSED,'ROOM_CLOSED');return;}
     const result=parseClientFrame(frame);if(!result.ok){this.error(ws,result.code);if(result.code==='PROTOCOL_VERSION')this.retire(ws,CLOSE_CODES.PROTOCOL_VERSION,'PROTOCOL_VERSION');return;}
-    const msg=result.value;if(msg.type==='ping'){if(a.authed)try{ws.send('pong');}catch{}return;}
+    let msg=result.value;if(msg.type==='ping'){if(a.authed)try{ws.send('pong');}catch{}return;}
     if(!a.authed){if(msg.type!=='hello'){this.error(ws,'BAD_AUTH');return;}await this.hello(ws,a,msg);return;}
     if(!this.current(a)){this.retire(ws,CLOSE_CODES.REPLACED_SESSION,'REPLACED_SESSION');return;}
     if(['accept','reject','kick','set_board','close_room','teacher_leaving'].includes(msg.type)){
@@ -187,8 +208,9 @@ export class Room extends DurableObject<Env>{
       if(msg.type==='close_room'){await this.closeRoom();return;}
       if(msg.type==='teacher_leaving'){this.retire(ws,1000,'TEACHER_LEAVING');this.sql.exec('UPDATE meta SET grace_at=?',Date.now()+10000);this.eachEditor(socket=>this.send(socket,{type:'paused',reason:'teacher_disconnected'}));await this.schedule();return;}
       if(msg.type==='set_board'){
+        this.sql.exec('DELETE FROM op_upload_parts');this.sql.exec('DELETE FROM op_uploads');
         this.sql.exec('UPDATE meta SET board_id=?',msg.boardId);this.sql.exec('INSERT OR IGNORE INTO state VALUES(?,?,0)',msg.boardId,JSON.stringify(emptyState()));
-        this.eachEditor(socket=>{this.send(socket,{type:'board_changed',boardId:msg.boardId});this.snapshot(socket);});return;
+        const boardId=msg.boardId;this.eachEditor(socket=>{this.send(socket,{type:'board_changed',boardId});this.snapshot(socket);});return;
       }
       if(msg.type==='accept'||msg.type==='reject'||msg.type==='kick'){
         const student=this.student(msg.studentId);if(!student){this.error(ws,'NOT_FOUND');return;}
@@ -202,6 +224,11 @@ export class Room extends DurableObject<Env>{
       }
     }
     if(!this.editable(a)){this.error(ws,'NOT_ACTIVE');return;}
+    if(msg.type==='ops_chunk'){
+      if(a.role!=='teacher'){this.error(ws,'FORBIDDEN',msg.uploadId);return;}
+      if(!this.teacherPresent()){this.error(ws,'PAUSED',msg.uploadId);return;}
+      const assembled=this.receiveUpload(ws,a,msg);if(!assembled)return;msg=assembled;
+    }
     if(msg.type==='resync_request'){this.snapshot(ws);return;}
     if(msg.type!=='ops'){this.error(ws,'BAD_MESSAGE');return;}
     if(!this.teacherPresent()){this.error(ws,'PAUSED');return;}
@@ -232,7 +259,7 @@ export class Room extends DurableObject<Env>{
   }
   async webSocketClose(ws:WebSocket){
     if(this.purged)return;const a=this.attachment(ws);if(!a?.socketId)return;const wasCurrent=this.current(a);
-    this.sql.exec('DELETE FROM sessions WHERE socket_id=?',a.socketId);this.sql.exec('DELETE FROM auth_deadlines WHERE socket_id=?',a.socketId);this.buckets.delete(a.socketId);
+    this.clearUpload(a.socketId);this.sql.exec('DELETE FROM sessions WHERE socket_id=?',a.socketId);this.sql.exec('DELETE FROM auth_deadlines WHERE socket_id=?',a.socketId);this.buckets.delete(a.socketId);
     if(a.studentId)this.sql.exec('UPDATE students SET last_seen=? WHERE id=?',Date.now(),a.studentId);
     const m=this.meta();if(wasCurrent&&a.role==='teacher'&&m&&!m.closed&&!this.teacherPresent()){
       this.sql.exec('UPDATE meta SET grace_at=?',Date.now()+LIMITS.teacherGraceMs);this.eachEditor(socket=>this.send(socket,{type:'paused',reason:'teacher_disconnected'}));
