@@ -4,6 +4,7 @@ let newId=()=>crypto.randomUUID(),undoShared=()=>{},afterDraw=()=>{};
 'use strict';
 const $=s=>document.querySelector(s);
 const vs=$('#vs'),cm=$('#cm'),stage=$('#stage');
+let paper={x:0,y:0,w:1000,h:560};
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const COLORS=['#111111','#6b7280','#e03e3e','#f97316','#eab308','#84cc16','#2e8b57','#06b6d4','#2563eb','#8e44ad','#ec4899','#92400e'];
@@ -63,9 +64,9 @@ function regionsSVG(){
   const u=f.r?V.items.find(o=>o.id===f.r&&o.t==='r'):null;if(f.r&&!u)return;
   const inn=f.i.map(id=>circs.find(c=>c.id===id));if(inn.some(c=>!c))return;
   const oth=circs.filter(c=>!f.i.includes(c.id));
-  defs+=`<mask id="m${k}" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="560"><rect width="1000" height="560" fill="#fff"/>${oth.map(c=>`<circle cx="${c.x}" cy="${c.y}" r="${c.r}" fill="#000"/>`).join('')}</mask>`;
+  defs+=`<mask id="m${k}" maskUnits="userSpaceOnUse" x="${paper.x}" y="${paper.y}" width="${paper.w}" height="${paper.h}"><rect x="${paper.x}" y="${paper.y}" width="${paper.w}" height="${paper.h}" fill="#fff"/>${oth.map(c=>`<circle cx="${c.x}" cy="${c.y}" r="${c.r}" fill="#000"/>`).join('')}</mask>`;
   inn.forEach((c,j)=>{defs+=`<clipPath id="k${k}_${j}"><circle cx="${c.x}" cy="${c.y}" r="${c.r}"/></clipPath>`});
-  const rect=u?`<rect x="${u.x}" y="${u.y}" width="${u.w}" height="${u.h}" fill="${f.c}" opacity=".6"/>`:`<rect width="1000" height="560" fill="${f.c}" opacity=".6"/>`;
+  const rect=u?`<rect x="${u.x}" y="${u.y}" width="${u.w}" height="${u.h}" fill="${f.c}" opacity=".6"/>`:`<rect x="${paper.x}" y="${paper.y}" width="${paper.w}" height="${paper.h}" fill="${f.c}" opacity=".6"/>`;
   let g=rect;for(let j=inn.length-1;j>=0;j--)g=`<g clip-path="url(#k${k}_${j})">${g}</g>`;
   body+=`<g mask="url(#m${k})" class="dc">${g}</g>`;
  });
@@ -84,12 +85,18 @@ function handlesSVG(){
  }
 }
 function draw(){
+ const size=stage.getBoundingClientRect();
+ if(tab==='v'&&size.width>0&&size.height>0){
+  const ratio=size.width/size.height,w=Math.max(1000,560*ratio),h=w/ratio;
+  paper={x:(1000-w)/2,y:(560-h)/2,w,h};
+ }else paper={x:0,y:0,w:1000,h:560};
+ vs.setAttribute('viewBox',`${paper.x} ${paper.y} ${paper.w} ${paper.h}`);
  const cap=['p','l','t','f'].includes(V.tool);
  vs.setAttribute('class',(tab!=='v'?'ov':'')+(cap?' cap':''));
  stage.classList.toggle('sc',tab!=='v');
  const L=letters();
  let h=`<defs><pattern id="gr" width="50" height="50" patternUnits="userSpaceOnUse"><path d="M50 0H0V50" fill="none" style="stroke:var(--bd)" stroke-width="1"/></pattern></defs>`;
- h+=`<rect class="dc" width="1000" height="560" fill="${tab==='v'?'url(#gr)':'none'}"/>`;
+ h+=`<rect class="dc" x="${paper.x}" y="${paper.y}" width="${paper.w}" height="${paper.h}" fill="${tab==='v'?'url(#gr)':'none'}"/>`;
  h+=regionsSVG();
  h+=V.items.map(o=>itemSVG(o,L)).join('');
  h+=handlesSVG();

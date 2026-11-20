@@ -4,16 +4,27 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 
 function harness(){
- const elements=new Map();let serial=0;
+ const elements=new Map();let serial=0,width=1000,height=560;
  const element=id=>{
-  if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',style:{},dataset:{},classList:{toggle(){}},addEventListener(){},setAttribute(){},getBoundingClientRect(){return {width:1000,height:560,left:0,top:0}}});
+  if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',style:{},dataset:{},classList:{toggle(){}},addEventListener(){},setAttribute(){},getBoundingClientRect(){return {width,height,left:0,top:0}}});
   return elements.get(id);
  };
  const context=vm.createContext({console,Math,structuredClone,crypto:{randomUUID:()=>`test-${++serial}`},window:{addEventListener(){}},document:{querySelector:element,querySelectorAll:()=>[],addEventListener(){},body:element('body'),documentElement:element('html')},putHTML:(el,html)=>el.innerHTML=html});
  const source=readFileSync(new URL('../../src/boards/aritmetica/runtime.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/,'').replace('export const arithmetic=','const arithmetic=');
  vm.runInContext(source,context,{timeout:2000});
- return {run:code=>JSON.parse(vm.runInContext(`JSON.stringify((()=>{${code}})())`,context,{timeout:2000})??'null'),html:id=>element(id).innerHTML};
+ return {resize(w,h){width=w;height=h;vm.runInContext('draw()',context)},run:code=>JSON.parse(vm.runInContext(`JSON.stringify((()=>{${code}})())`,context,{timeout:2000})??'null'),html:id=>element(id).innerHTML};
 }
+
+test('el lienzo y el balde cubren pantallas anchas sin deformar las figuras ni cambiar sus datos',()=>{
+ const h=harness();const before=h.run(`make('c');V.fl=[{r:0,i:[],c:'#2563eb'}];return V.items`);
+ h.resize(1860,530);
+ const paper=h.run('return paper');
+ assert(Math.abs(paper.w/paper.h-1860/530)<1e-9);
+ assert(paper.w>1900);assert(paper.x<0);
+ assert(h.html('#vs').includes(`width="${paper.w}" height="${paper.h}"`));
+ assert.deepEqual(h.run('return V.items'),before);
+ h.run(`act('tab','prod')`);assert.deepEqual(h.run('return paper'),{x:0,y:0,w:1000,h:560});
+});
 
 for(const [kind,count] of [['v2',3],['v3',4],['c',1],['r',1],['d',1],['g',1],['x',1],['o',1]])test(`creación y dibujo de ${kind}`,()=>{
  const h=harness();const items=h.run(`make('${kind}');return V.items`);

@@ -56,4 +56,5 @@ for(const [id,css,label] of [['hide-upper','hide-upper','superior'],['hide-lower
 live.subscribe(view=>{document.getElementById('room-status').textContent=view.status==='active'?'Conectado':view.error||'Conectando…';decorate();});
 if(live.mode==='solo'){const button=document.createElement('button');button.textContent='Clase';button.onclick=()=>location.assign('/profesor/?board=aritmetica');document.getElementById('live-slot').append(button);}
 decorate();
+new ResizeObserver(()=>board.draw()).observe(document.getElementById('stage'));
 
