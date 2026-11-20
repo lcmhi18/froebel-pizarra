@@ -9,7 +9,7 @@ import {isGeometryImageUrl} from '../../.live-test/unit/boards/geometria/image-s
 // provider. This does not bypass or change production authentication.
 async function portal(signedIn=true){
  const elements=new Map();
- const make=(dataset={})=>({dataset,hidden:false,value:'',classList:{add(){},remove(){}},listeners:{},addEventListener(type,fn){this.listeners[type]=fn;},setAttribute(key,value){this[key]=value;},removeAttribute(key){delete this[key];},focus(){}});
+ const make=(dataset={})=>({dataset,hidden:false,value:'',classList:{add(){},remove(){},toggle(){}},listeners:{},addEventListener(type,fn){this.listeners[type]=fn;},setAttribute(key,value){this[key]=value;},removeAttribute(key){delete this[key];},focus(){}});
  const element=selector=>{if(!elements.has(selector))elements.set(selector,make());return elements.get(selector);};
  const levels=[make({level:'primaria'}),make({level:'secundaria'})],subjects=[make({subject:'geometria'}),make({subject:'aritmetica'}),make({subject:'razonamiento'}),make({subject:'algebra'})],destinations=[];
  const auth={onAuthStateChange(){},getSession:async()=>({data:{session:signedIn?{user:{id:'offline-teacher'}}:null}})};

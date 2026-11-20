@@ -119,6 +119,7 @@ document.querySelectorAll('[data-view]').forEach(button => button.addEventListen
 function showLevel(level) {
   if (!authenticated) return;
   currentLevel = level;
+  $('#level-screen').classList.toggle('primary-courses',level==='primaria');
   const assets = courseAssets[level];
   $('#home-screen').hidden = true;
   $('#subject-screen').hidden = true;
@@ -133,7 +134,6 @@ function showLevel(level) {
   $('#arithmetic-image').src = assets.arithmetic;
   $('.geometry-choice').setAttribute('aria-label', `Geometría · ${assets.name}`);
   $('.arithmetic-choice').setAttribute('aria-label', `Aritmética · ${assets.name}`);
-  $('.primary-extra-cards').hidden = level !== 'primaria';
   $('#level-title').focus();
 }
 document.querySelectorAll('[data-level]').forEach(button => button.addEventListener('click', () => showLevel(button.dataset.level)));
