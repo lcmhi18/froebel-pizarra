@@ -1,6 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { applyOp, emptyState, matches, json, hash, parseClientFrame, LIMITS, CLOSE_CODES, sanitizeFirstName, isBoardId, type Env, type LegacyOp, type BoardState, type Op, type BoardId, type ErrorCode } from './protocol';
 import { applyOperation } from '../src/shared/operations';
+import {boardOperationError,boardStateError} from '../src/shared/permissions';
 
 type Attachment={socketId:string;authed:boolean;role?:'teacher'|'student';studentId?:string;ipHash:string};
 type Meta={code:string;room:string;teacher_token_hash:string;closed:number;created_at:number;board_id:BoardId;seq:number;grace_at:number|null;purge_at:number|null;notify_at:number|null;next_alarm_kind:string|null;next_alarm_at:number|null};
@@ -213,14 +214,16 @@ export class Room extends DurableObject<Env>{
       for(const input of msg.ops){
         const duplicate=this.sql.exec<{json:string}>('SELECT json FROM ops WHERE op_id=?',input.opId).toArray()[0];if(duplicate){duplicates.push(JSON.parse(duplicate.json));continue;}
         if(input.kind==='add'&&!input.id.startsWith(`${author}:`)&&!this.sql.exec('SELECT id FROM tombstones WHERE board_id=? AND id=?',m.board_id,input.id).toArray().length)throw Error('FORBIDDEN');
+        const permissionError=boardOperationError(m.board_id,a.role!,input,state);if(permissionError)throw Error(permissionError);
         if(!applyOperation(state,input)){ignored.push(input.opId);continue;}
         const op={...input,seq:++seq};this.sql.exec('INSERT INTO ops VALUES(?,?,?,?)',seq,m.board_id,JSON.stringify(op),op.opId);accepted.push(op);
         if(op.kind==='remove')this.sql.exec('INSERT OR IGNORE INTO tombstones VALUES(?,?)',m.board_id,op.id);
       }
+      const boardError=boardStateError(m.board_id,state);if(boardError)throw Error(boardError);
       const text=JSON.stringify(state);if(bytes(text)>LIMITS.stateBytes)throw Error('STATE_TOO_LARGE');
       if(Math.floor(seq/200)>Math.floor(m.seq/200))this.sql.exec('UPDATE state SET json=?,seq=? WHERE board_id=?',text,seq,m.board_id);
       this.sql.exec('UPDATE meta SET seq=?',seq);
-    });}catch(error){this.error(ws,(error as Error).message==='FORBIDDEN'?'FORBIDDEN':'STATE_TOO_LARGE',msg.ops[0].opId);return;}
+    });}catch(error){const message=(error as Error).message;this.error(ws,message==='FORBIDDEN'?'FORBIDDEN':message==='BAD_MESSAGE'?'BAD_MESSAGE':'STATE_TOO_LARGE',msg.ops[0].opId);return;}
     // Send separately so a multi-op input never creates a >64KB broadcast frame.
     for(const op of accepted)this.eachEditor(socket=>this.send(socket,{type:'ops',ops:[op]}));
     for(const op of duplicates)this.send(ws,{type:'ops',ops:[op]});

@@ -1,0 +1,85 @@
+import {SELF,runInDurableObject} from 'cloudflare:test';
+import {env as bindings} from 'cloudflare:workers';
+import {afterEach,expect,it} from 'vitest';
+import type {Env} from '../../worker/protocol';
+import type {Room} from '../../worker/room';
+import type {BoardState} from '../../src/shared/protocol';
+const env=bindings as Env,origin='http://localhost:5174';let serial=0;
+const clients:Client[]=[];
+class Client{
+ frames:any[]=[];author='';id='';
+ constructor(readonly ws:WebSocket){ws.accept();clients.push(this);ws.addEventListener('message',event=>{if(event.data!=='pong')this.frames.push(JSON.parse(event.data as string))});}
+ send(value:unknown){this.ws.send(JSON.stringify(value))}
+ async next(type:string,predicate:(frame:any)=>boolean=()=>true){for(let i=0;i<300;i++){const at=this.frames.findIndex(frame=>frame.type===type&&predicate(frame));if(at>=0)return this.frames.splice(at,1)[0];await new Promise(resolve=>setTimeout(resolve,5))}throw Error('Missing '+type)}
+ operation(data:Record<string,unknown>){return {opId:this.author+':'+crypto.randomUUID(),author:this.author,boardId:'recta-numerica',gestureId:'g',...data}}
+ async accepted(data:Record<string,unknown>){const operation=this.operation(data);this.send({type:'ops',ops:[operation]});return this.next('ops',frame=>frame.ops[0].opId===operation.opId)}
+ async rejected(data:Record<string,unknown>,code:string){const operation=this.operation(data);this.send({type:'ops',ops:[operation]});expect((await this.next('error',frame=>frame.ref===operation.opId)).code).toBe(code)}
+ async snapshot(){this.send({type:'resync_request',fromSeq:0});const start=await this.next('snapshot_start');let text='';for(let i=0;i<start.chunks;i++)text+=(await this.next('snapshot_chunk',frame=>frame.snapshotId===start.snapshotId&&frame.index===i)).data;await this.next('snapshot_end',frame=>frame.snapshotId===start.snapshotId);return {state:JSON.parse(text) as BoardState,seq:start.seq}}
+}
+afterEach(()=>{for(const client of clients.splice(0))try{client.ws.close()}catch{}});
+async function fixture(){
+ const headers={Origin:origin,'CF-Connecting-IP':`198.18.20.${++serial}`};
+ const response=await SELF.fetch('http://localhost/api/rooms',{method:'POST',headers,body:JSON.stringify({boardId:'recta-numerica'})});expect(response.status).toBe(200);
+ const {code,teacherToken}=await response.json() as {code:string;teacherToken:string};
+ const lookup=await env.REGISTRY.get(env.REGISTRY.idFromName('registry')).fetch('https://registry/lookup',{method:'POST',body:JSON.stringify({code})});const {room}=await lookup.json() as {room:string};
+ const stub=env.ROOM.get(env.ROOM.idFromName(room)) as DurableObjectStub<Room>;
+ async function connect(role:'teacher'|'student'){
+  const response=await SELF.fetch(`http://localhost/api/rooms/${code}/ws`,{headers:{...headers,'CF-Connecting-IP':`198.18.20.${++serial}`,Upgrade:'websocket'}});expect(response.status).toBe(101);
+  const client=new Client(response.webSocket!);client.send(role==='teacher'?{type:'hello',v:1,role,token:teacherToken}:{type:'hello',v:1,role,name:'Alumno'});
+  const joined=await client.next('joined');client.author=joined.author;client.id=joined.studentId;
+  if(role==='teacher')await client.next('snapshot_end');else await client.next('waiting');client.frames=[];return client;
+ }
+ const teacher=await connect('teacher'),student=await connect('student');teacher.send({type:'accept',studentId:student.id});await student.next('snapshot_end');student.frames=[];
+ return {teacher,student,connect,stub};
+}
+for(const field of ['note','fs'])it(`server refuses student ${field} changes without changing state`,async()=>{
+ const {teacher,student}=await fixture();const before=await teacher.snapshot();
+ await student.rejected({kind:'field',field,value:field==='fs'?24:[{k:'t',v:'No permitido'}]},'FORBIDDEN');
+ expect(await teacher.snapshot()).toEqual(before);
+});
+it('server rejects pin number edits and out-of-range pin positions',async()=>{
+ const {teacher,student}=await fixture(),id=teacher.author+':pin';
+ await teacher.accepted({kind:'add',id,patch:{t:'pin',n:3,v:3}});
+ await student.rejected({kind:'update',id,patch:{n:5}},'BAD_MESSAGE');
+ await student.rejected({kind:'add',id:student.author+':bad',patch:{t:'pin',n:5,v:99}},'BAD_MESSAGE');
+ expect((await teacher.snapshot()).state.items[id]).toEqual({t:'pin',n:3,v:3});
+});
+it('student mark changes and moves to another author pin reach the teacher',async()=>{
+ const {teacher,student}=await fixture(),id=teacher.author+':pin';
+ await teacher.accepted({kind:'add',id,patch:{t:'pin',n:3,v:3}});
+ await student.accepted({kind:'field',field:'a',value:3});await teacher.next('ops',frame=>frame.ops[0].field==='a');
+ await student.accepted({kind:'update',id,patch:{v:5}});await teacher.next('ops',frame=>frame.ops[0].kind==='update');
+ expect((await teacher.snapshot()).state.fields.a).toBe(3);expect((await teacher.snapshot()).state.items[id]).toEqual({t:'pin',n:3,v:5});
+});
+it('zero/zero marks reject the entire transaction, but a valid final batch can pass through transient zero',async()=>{
+ const {teacher,student}=await fixture();const before=await teacher.snapshot();
+ const a=student.operation({kind:'field',field:'a',value:0}),b=student.operation({kind:'field',field:'b',value:0});student.send({type:'ops',ops:[a,b]});
+ expect((await student.next('error')).code).toBe('BAD_MESSAGE');expect(await teacher.snapshot()).toEqual(before);
+ await teacher.accepted({kind:'field',field:'a',value:1});await teacher.accepted({kind:'field',field:'b',value:0});
+ const next=[student.operation({kind:'field',field:'a',value:0}),student.operation({kind:'field',field:'b',value:1})];student.send({type:'ops',ops:next});await student.next('ops',frame=>frame.ops[0].opId===next[1].opId);
+ expect((await teacher.snapshot()).state.fields).toEqual({a:0,b:1});
+});
+it('teacher notes reach active students but are never sent to pending students',async()=>{
+ const {teacher,student,connect}=await fixture(),pending=await connect('student');
+ const note=[{k:'t',v:'Explicación <b>en texto plano</b>'}];await teacher.accepted({kind:'field',field:'note',value:note});
+ const frame=await student.next('ops',frame=>frame.ops[0].field==='note');expect(frame.ops[0].value).toEqual(note);
+ expect(pending.frames.some(frame=>['ops','snapshot_start','snapshot_chunk','snapshot_end'].includes(frame.type))).toBe(false);
+});
+it('unsafe image types and oversized image frames are rejected without altering notes',async()=>{
+ const {teacher}=await fixture();const before=await teacher.snapshot();
+ for(const src of ['data:image/svg+xml;base64,PHN2Zz4=','data:image/png;base64,'+btoa('x'.repeat(400*1024))]){
+  const operation=teacher.operation({kind:'field',field:'note',value:[{k:'i',src}]});teacher.send({type:'ops',ops:[operation]});expect((await teacher.next('error')).code).toBe('BAD_MESSAGE');
+ }
+ expect(await teacher.snapshot()).toEqual(before);
+});
+it('the 201st pin and a multi-op over-limit transaction are rolled back',async()=>{
+ const {teacher,student,stub}=await fixture();
+ await runInDurableObject(stub,(_room,state)=>{
+  const board:BoardState={items:{},order:[],fields:{a:10,b:10}};
+  for(let i=0;i<200;i++){const id='teacher:p'+i;board.items[id]={t:'pin',n:1,v:1};board.order.push(id)}
+  state.storage.sql.exec('INSERT OR REPLACE INTO state(board_id,json,seq) VALUES(?,?,?)','recta-numerica',JSON.stringify(board),0);
+ });
+ await student.rejected({kind:'add',id:student.author+':extra',patch:{t:'pin',n:1,v:1}},'STATE_TOO_LARGE');
+ const ops=[student.operation({kind:'remove',id:'teacher:p0'}),...['a','b'].map(suffix=>student.operation({kind:'add',id:student.author+':'+suffix,patch:{t:'pin',n:1,v:1}}))];student.send({type:'ops',ops});
+ expect((await student.next('error')).code).toBe('STATE_TOO_LARGE');const snapshot=await teacher.snapshot();expect(Object.keys(snapshot.state.items)).toHaveLength(200);expect(snapshot.state.items['teacher:p0']).toBeDefined();expect(snapshot.seq).toBe(0);
+});
