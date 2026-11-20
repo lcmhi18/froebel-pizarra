@@ -24,7 +24,7 @@ test('Secundaria conserva su propia entrada de geometría',async()=>{const p=awa
 
 test('Primaria → Aritmética abre la nueva pizarra de conjuntos',async()=>{const p=await portal();p.levels[0].listeners.click();p.subjects[1].listeners.click();assert.deepEqual(p.destinations,['/boards/aritmetica/']);});
 test('Primaria → Razonamiento Matemático abre perímetro y área',async()=>{const p=await portal();p.levels[0].listeners.click();assert.equal(p.elements.get('.primary-extra-cards').hidden,false);p.subjects[2].listeners.click();assert.deepEqual(p.destinations,['/boards/razonamiento/']);});
-test('Primaria → Álgebra abre la recta numérica y las nuevas tarjetas solo aparecen en Primaria',async()=>{const p=await portal();p.levels[0].listeners.click();p.subjects[3].listeners.click();assert.deepEqual(p.destinations,['/boards/recta-numerica/']);p.levels[1].listeners.click();assert.equal(p.elements.get('.primary-extra-cards').hidden,true);});
+test('Primaria → Álgebra abre el catálogo de pizarras y las nuevas tarjetas solo aparecen en Primaria',async()=>{const p=await portal();p.levels[0].listeners.click();p.subjects[3].listeners.click();assert.deepEqual(p.destinations,['/algebra/']);p.levels[1].listeners.click();assert.equal(p.elements.get('.primary-extra-cards').hidden,true);});
 test('el acceso de cursos sigue requiriendo una sesión autorizada',async()=>{const p=await portal(false);p.levels[0].listeners.click();p.subjects[0].listeners.click();assert.deepEqual(p.destinations,[]);});
 
 const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jD1sAAAAASUVORK5CYII=';

@@ -18,6 +18,17 @@ class Client{
  async snapshot(){this.send({type:'resync_request',fromSeq:0});const start=await this.next('snapshot_start');let text='';for(let i=0;i<start.chunks;i++)text+=(await this.next('snapshot_chunk',frame=>frame.snapshotId===start.snapshotId&&frame.index===i)).data;await this.next('snapshot_end',frame=>frame.snapshotId===start.snapshotId);return {state:JSON.parse(text) as BoardState,seq:start.seq}}
 }
 afterEach(()=>{for(const client of clients.splice(0))try{client.ws.close()}catch{}});
+it('combined operations shares the teacher lesson and rejects pupil control and invalid lessons',async()=>{
+ const {teacher,student}=await fixture();teacher.send({type:'set_board',boardId:'operaciones-combinadas'});await student.next('snapshot_end');await teacher.next('snapshot_end');teacher.frames=[];student.frames=[];
+ const operation=(client:Client,value:unknown)=>({...client.operation({kind:'field',field:'lesson',value}),boardId:'operaciones-combinadas'});
+ const initial=operation(teacher,{expression:'30-[12-(5*3-20)]',step:2});teacher.send({type:'ops',ops:[initial]});
+ expect((await student.next('ops',m=>m.ops[0].opId===initial.opId)).ops[0].value).toEqual({expression:'30-[12-(5*3-20)]',step:2});
+ const forbidden=operation(student,{expression:'1+2',step:1});student.send({type:'ops',ops:[forbidden]});expect((await student.next('error')).code).toBe('FORBIDDEN');
+ const stroke={...teacher.operation({kind:'add',id:'teacher:drawing',patch:{t:'stroke',c:'#fff02b',w:5,a:1,p:[[.1,.2],[.6,.25]]}}),boardId:'operaciones-combinadas'};teacher.send({type:'ops',ops:[stroke]});expect((await student.next('ops',m=>m.ops[0].opId===stroke.opId)).ops[0].patch.t).toBe('stroke');
+ const erase={...student.operation({kind:'remove',id:'teacher:drawing'}),boardId:'operaciones-combinadas'};student.send({type:'ops',ops:[erase]});expect((await student.next('error')).code).toBe('FORBIDDEN');
+ for(const value of [{expression:'7/2',step:0},{expression:'1+2',step:60},{expression:'1+2',step:0,unexpected:true}]){const invalid=operation(teacher,value);teacher.send({type:'ops',ops:[invalid]});expect((await teacher.next('error')).code).toBe('BAD_MESSAGE');}
+ expect((await teacher.snapshot()).state.fields.lesson).toEqual({expression:'30-[12-(5*3-20)]',step:2});
+});
 async function fixture(){
  const headers={Origin:origin,'CF-Connecting-IP':`198.18.20.${++serial}`};
  const response=await SELF.fetch('http://localhost/api/rooms',{method:'POST',headers,body:JSON.stringify({boardId:'recta-numerica'})});expect(response.status).toBe(200);

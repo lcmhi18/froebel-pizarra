@@ -33,11 +33,13 @@
     "test:equivalence": "node scripts/test-equivalence.mjs",
     "test:e10": "npm run test:e9 && npm run test:equivalence",
     "dev:konva": "vite --config vite.konva.config.ts",
-    "build:konva": "node scripts/build-konva.mjs"
+    "build:konva": "node scripts/build-konva.mjs",
+    "test:combined": "node --test tests/combined/*.test.mjs"
   },
   "dependencies": {
     "@fontsource/fredoka": "5.3.0",
     "@fontsource/nunito": "5.3.0",
+    "@fontsource/patrick-hand": "5.3.0",
     "@phosphor-icons/core": "2.1.1",
     "@phosphor-icons/react": "2.1.10",
     "@supabase/supabase-js": "2.80.0",

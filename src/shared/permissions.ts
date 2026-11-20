@@ -1,10 +1,13 @@
 import type {BoardState,Op,ErrorCode} from './protocol';
+import {buildSteps} from '../boards/operaciones-combinadas/engine.js';
+import {CONFIG} from '../boards/operaciones-combinadas/config.js';
 
 export type BoardPermissions={student:{itemTypes:readonly string[]|'*';operations:readonly string[];fields:readonly string[]|'*'};teacherOnlyFields:readonly string[]};
 const unrestricted:BoardPermissions={student:{itemTypes:'*',operations:['add','update','remove','order','field'],fields:'*'},teacherOnlyFields:[]};
 export const BOARD_PERMISSIONS:Record<string,BoardPermissions>={
  prueba:unrestricted,_plantilla:unrestricted,geometria:unrestricted,konva:unrestricted,aritmetica:unrestricted,
  'recta-numerica':{student:{itemTypes:['pin'],operations:['add','update','remove','order','field'],fields:['a','b']},teacherOnlyFields:['note','fs']},
+ 'operaciones-combinadas':{student:{itemTypes:[],operations:[],fields:[]},teacherOnlyFields:['lesson']},
 };
 const record=(value:unknown):value is Record<string,unknown>=>!!value&&typeof value==='object'&&!Array.isArray(value)&&Object.getPrototypeOf(value)===Object.prototype;
 const only=(value:Record<string,unknown>,keys:readonly string[])=>Object.keys(value).every(key=>keys.includes(key));
@@ -34,6 +37,18 @@ export function validNote(value:unknown):boolean{
 }
 /** Called for every authenticated operation, before application or persistence. */
 export function boardOperationError(boardId:string,role:'teacher'|'student',op:Op,state:BoardState):ErrorCode|null{
+ if(boardId==='operaciones-combinadas'){
+  if(role!=='teacher')return 'FORBIDDEN';
+  if(op.kind==='field'){
+   if(op.field!=='lesson'||!record(op.value)||!only(op.value,['expression','step'])||typeof op.value.expression!=='string'||!integer(op.value.step,0,CONFIG.maxSteps))return 'BAD_MESSAGE';
+   try{return op.value.step<buildSteps(op.value.expression).steps.length?null:'BAD_MESSAGE';}catch{return 'BAD_MESSAGE';}
+  }
+  if(op.kind==='add'||op.kind==='update'){
+   const item=op.kind==='add'?op.patch:{...state.items[op.id],...op.patch};
+   return only(item,['t','c','w','a','p'])&&item.t==='stroke'&&['#fff02b','#ff8fb8','#7fd4ff','#ffffff'].includes(String(item.c))&&Object.values(CONFIG.drawing).some(preset=>item.w===preset.width&&item.a===preset.opacity)&&Array.isArray(item.p)&&item.p.length>0&&item.p.length<=4000&&item.p.every(q=>Array.isArray(q)&&q.length===2&&q.every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100))?null:'BAD_MESSAGE';
+  }
+  return null;
+ }
  if(boardId!=='recta-numerica')return null;
  if(op.kind==='field'){
   if(role==='student'&&BOARD_PERMISSIONS[boardId].teacherOnlyFields.includes(op.field))return 'FORBIDDEN';

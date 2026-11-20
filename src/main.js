@@ -141,7 +141,7 @@ document.querySelectorAll('[data-subject]').forEach(button => button.addEventLis
   if (!authenticated) return;
   if (button.dataset.subject === 'aritmetica' && currentLevel === 'primaria') { location.assign('/boards/aritmetica/'); return; }
   if (button.dataset.subject === 'razonamiento' && currentLevel === 'primaria') { location.assign('/boards/razonamiento/'); return; }
-  if (button.dataset.subject === 'algebra' && currentLevel === 'primaria') { location.assign('/boards/recta-numerica/'); return; }
+  if (button.dataset.subject === 'algebra' && currentLevel === 'primaria') { location.assign('/algebra/'); return; }
   if (button.dataset.subject === 'geometria') { location.assign(geometryDestination(currentLevel)); return; }
   $('#level-screen').hidden = true;
   $('#subject-screen').hidden = false;
