@@ -2016,7 +2016,8 @@ listen(document,'input', e => {
         draw();
     }
 });
-$('bOp').onclick = e => { const b = document.body.classList.toggle('noopt'); e.target.textContent = b ? '👁 Mostrar opciones' : '🙈 Ocultar opciones'; e.target.classList.toggle('on', b); };
+$('bOp').onclick = e => { const hidden = document.body.classList.toggle('hide-upper'); e.currentTarget.textContent = hidden ? '👁 Mostrar menú superior' : '🙈 Ocultar menú superior'; e.currentTarget.setAttribute('aria-expanded',String(!hidden)); e.currentTarget.classList.toggle('on',hidden); };
+$('bBottom').onclick = e => { const hidden = document.body.classList.toggle('hide-lower'); e.currentTarget.textContent = hidden ? '👁 Mostrar menú inferior' : '🙈 Ocultar menú inferior'; e.currentTarget.setAttribute('aria-expanded',String(!hidden)); e.currentTarget.classList.toggle('on',hidden); };
 $('bUn').onclick = () => {
     if (H.length) {
         S.items = JSON.parse(H.pop());
