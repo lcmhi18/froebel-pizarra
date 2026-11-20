@@ -1,7 +1,6 @@
 import '@fontsource/fredoka/latin-400.css';
 import '@fontsource/fredoka/latin-600.css';
 import '@fontsource/fredoka/latin-700.css';
-import '../geometria/geometry.css';
 import './style.css';
 import {initialState,formatNumber,adjustMarks,addPin,movePin,removePin,clearLine,adjustFont,columnAt,inside,placementMessage} from './model.js';
 import {NumberLineAdapter} from './adapter';
@@ -48,7 +47,7 @@ function renderDisplay(){
   token.setAttribute('aria-label',`${formatNumber(formed())}. Arrastra a la recta o toca y elige una marca.`);display.replaceChildren(token);
  }else display.replaceChildren(node('span',(sign||'')+digits||'Elige + o − y los dígitos',digits?'partial-number':''));
  document.querySelectorAll('[data-sign]').forEach(button=>{const selected=button.dataset.sign===sign;button.classList.toggle('on',selected);button.setAttribute('aria-pressed',String(selected));});
- byId('frog-message').textContent=message;
+ byId('frog-message').textContent=message.replace(/[🐸✅👆💡]/gu,'').trim();
 }
 function render(){renderLine();renderDisplay();note.style.fontSize=state.fs+'px';byId('font-size').textContent='Letra '+state.fs;}
 function resetForm(){sign=null;digits='';}

@@ -39,3 +39,11 @@ No se ha realizado revisión visual real ni probado el portapapeles nativo: el n
 4. Verificación final de sala, revisión visual si está disponible y publicación del conjunto.
 
 La revisión visual real y las pruebas de sala no forman parte de los resultados automáticos de esta primera etapa. El proyecto no contiene actualmente la carpeta `app/`.
+
+## Etapa 4: revisión final y publicación autorizada
+
+El usuario confirmó la etapa y luego cambió explícitamente la referencia visual: ahora se utiliza el diseño tropical de la imagen original, en lugar del diseño de Geometría. Se conserva la lógica de sala y el adapter. Se añadieron fondo y rana ilustrados, servidos localmente como WebP (aproximadamente 229 KB entre ambos), marcos marrones, teclado verde y pines tipo marcador. La revisión visual está documentada en `design-qa.md`.
+
+Compilación correcta después del cambio visual y 17 pruebas de recta correctas. La etapa 3 ya verificó 117 pruebas de permisos, transporte, motor e integración. También pasaron las 3 pruebas de navegación. Se revisaron en navegador real la colocación de +7, notas multilínea, controles y distribución móvil. No se verificó una clase autenticada en producción ni el pegado nativo de imágenes.
+
+Cloudflare: identidad comprobada como fatimamendo7@gmail.com, account_id 373df7d753c05ace8818906faae9377f. Publicación mediante `npm run worker:deploy`, que vuelve a comprobar ambos. Vercel: proyecto froebel-pizarra, repositorio lcmhi18/froebel-pizarra, rama main.
