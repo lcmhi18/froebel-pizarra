@@ -40,6 +40,25 @@ test('el texto admite líneas vacías, conserva el escape y se puede seleccionar
  assert(h.html('#vs').includes('x = &lt;1&gt;'));
  assert(result.context.includes('<textarea id="txin"'));
 });
+
+test('tabla configurable conserva valores horizontales y verticales y completa todos los pares al solicitarlo',()=>{
+ const h=harness();const item=h.run(`make('g',{rows:2,cols:3,hLabels:['a','b','c'],vLabels:['1','2'],pairs:false});return V.items[0]`);
+ assert.equal(item.rows,2);assert.equal(item.cols,3);assert.equal(item.pairs,false);
+ assert(!h.html('#vs').includes('(a; 1)'));
+ h.run(`act('pairs');return null`);
+ for(const x of ['a','b','c'])for(const y of ['1','2'])assert(h.html('#vs').includes(`(${x}; ${y})`));
+ const copied=h.run(`dup();return V.items[1]`);assert.deepEqual(copied.hLabels,['a','b','c']);assert.equal(copied.pairs,true);
+});
+test('plano cartesiano usa las dimensiones y etiquetas ingresadas sin interpretar HTML',()=>{
+ const h=harness();const item=h.run(`make('x',{rows:2,cols:4,hLabels:['2','4','6','<8>'],vLabels:['x','y']});return V.items[0]`);
+ assert.equal(item.cols,4);assert.equal(item.rows,2);assert(h.html('#vs').includes('&lt;8&gt;'));
+ assert(h.html('#vs').includes('>y</text>'));assert(!/NaN|Infinity/.test(h.html('#vs')));
+});
+test('completar pares en la vista de tabla rellena encabezados y producto completo',()=>{
+ const h=harness();const result=h.run(`P.eA='a;b';P.eB='1;2;3';P.view='tabla';act('prodPairs');return {tb:P.tb,th:P.th,html:cmProd()}`);
+ assert.equal(Object.keys(result.tb).length,6);assert.equal(result.tb['1,2'],'(b; 3)');assert.deepEqual(result.th,{a:['a','b'],b:['1','2','3']});
+ assert(result.html.includes('Completar pares'));
+});
 test('duplicar conserva el original y borrar elimina las regiones vinculadas',()=>{
  const h=harness();const result=h.run(`make('c');const first=clone(V.items[0]);V.fl=[{r:0,i:[first.id],c:'#2563eb'}];dup();del();V.sel=first.id;del();return {items:V.items,regions:V.fl}`);
  assert.deepEqual(result,{items:[],regions:[]});

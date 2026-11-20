@@ -1,5 +1,5 @@
 import {putHTML} from './sanitize';
-let newId=()=>crypto.randomUUID(),undoShared=()=>{},afterDraw=()=>{};
+let newId=()=>crypto.randomUUID(),undoShared=()=>{},afterDraw=()=>{},configureItem=k=>make(k);
 
 'use strict';
 const $=s=>document.querySelector(s);
@@ -52,9 +52,23 @@ function itemSVG(o,L){
  case 'd':{let h='';for(let i=0;i<o.k;i++){const a=o.x+100*i,b=o.y+90*i;h+=`<line x1="${a+35}" y1="${b-26}" x2="${a+35}" y2="${b+12}"/><line x1="${a+35}" y1="${b+12}" x2="${a+100}" y2="${b+12}"/><line x1="${a-30}" y1="${b+86}" x2="${a+30}" y2="${b+86}"/>`}
   return `<g class="it" stroke="${o.c}" stroke-width="${o.sw}" stroke-linecap="round" fill="none">${h}<rect x="${o.x-30}" y="${o.y-26}" width="${100*(o.k+1)+40}" height="${90*o.k+130}" fill="transparent" stroke="none"/></g>`}
  case 'g':{let h='';const W=(o.cols+1)*o.cw,H=(o.rows+1)*o.ch;for(let j=0;j<=o.rows+1;j++)h+=`<line x1="${o.x}" y1="${o.y+j*o.ch}" x2="${o.x+W}" y2="${o.y+j*o.ch}"/>`;for(let i=0;i<=o.cols+1;i++)h+=`<line x1="${o.x+i*o.cw}" y1="${o.y}" x2="${o.x+i*o.cw}" y2="${o.y+H}"/>`;
-  return `<g class="it" stroke="${o.c}" stroke-width="${o.sw}" stroke-linecap="round" fill="none">${h}</g>`}
+  if(o.hLabels||o.vLabels){
+   h+=`<g stroke="none" fill="${o.c}" font-size="18" text-anchor="middle" dominant-baseline="central">`;
+   for(let i=0;i<o.cols;i++)h+=`<text x="${o.x+(i+1.5)*o.cw}" y="${o.y+o.ch/2}">${esc(o.hLabels?.[i]??i+1)}</text>`;
+   for(let j=0;j<o.rows;j++){
+    h+=`<text x="${o.x+o.cw/2}" y="${o.y+(j+1.5)*o.ch}">${esc(o.vLabels?.[j]??j+1)}</text>`;
+    if(o.pairs)for(let i=0;i<o.cols;i++)h+=`<text x="${o.x+(i+1.5)*o.cw}" y="${o.y+(j+1.5)*o.ch}" font-size="15">${esc(`(${o.hLabels?.[i]??i+1}; ${o.vLabels?.[j]??j+1})`)}</text>`;
+   }
+   h+='</g>';
+  }
+  return `<g class="it" stroke="${o.c}" stroke-width="${o.sw}" stroke-linecap="round" fill="none">${h}<rect x="${o.x}" y="${o.y}" width="${W}" height="${H}" fill="transparent" stroke="none"/></g>`}
  case 'x':{const X=o.x,Y=o.y,W=o.w,H=o.h;
-  return `<g class="it" stroke="${o.c}" stroke-width="${o.sw}" stroke-linecap="round" fill="none"><line x1="${X}" y1="${Y+H}" x2="${X+W}" y2="${Y+H}"/><line x1="${X}" y1="${Y+H}" x2="${X}" y2="${Y}"/><polygon fill="${o.c}" points="${X+W+6},${Y+H} ${X+W-8},${Y+H-6} ${X+W-8},${Y+H+6}"/><polygon fill="${o.c}" points="${X},${Y-6} ${X-6},${Y+8} ${X+6},${Y+8}"/><rect x="${X-10}" y="${Y-16}" width="${W+26}" height="${H+26}" fill="transparent" stroke="none"/></g>`}
+  let labels='';
+  if(o.hLabels||o.vLabels){
+   for(let i=0;i<o.cols;i++){const x=X+(i+1)*W/(o.cols+1);labels+=`<line x1="${x}" y1="${Y+H-5}" x2="${x}" y2="${Y+H+5}"/><text stroke="none" fill="${o.c}" font-size="18" text-anchor="middle" x="${x}" y="${Y+H+24}">${esc(o.hLabels?.[i]??i+1)}</text>`;}
+   for(let j=0;j<o.rows;j++){const y=Y+H-(j+1)*H/(o.rows+1);labels+=`<line x1="${X-5}" y1="${y}" x2="${X+5}" y2="${y}"/><text stroke="none" fill="${o.c}" font-size="18" text-anchor="end" x="${X-10}" y="${y+6}">${esc(o.vLabels?.[j]??j+1)}</text>`;}
+  }
+  return `<g class="it" stroke="${o.c}" stroke-width="${o.sw}" stroke-linecap="round" fill="none"><line x1="${X}" y1="${Y+H}" x2="${X+W}" y2="${Y+H}"/><line x1="${X}" y1="${Y+H}" x2="${X}" y2="${Y}"/><polygon fill="${o.c}" points="${X+W+6},${Y+H} ${X+W-8},${Y+H-6} ${X+W-8},${Y+H+6}"/><polygon fill="${o.c}" points="${X},${Y-6} ${X-6},${Y+8} ${X+6},${Y+8}"/>${labels}<rect x="${X-10}" y="${Y-16}" width="${W+26}" height="${H+48}" fill="transparent" stroke="none"/></g>`}
  case 'o':return `<g class="it" stroke-width="${o.sw}" fill="none"><ellipse cx="${o.x+.17*o.w}" cy="${o.y+o.h/2}" rx="${.13*o.w}" ry="${o.h/2}" stroke="#2563eb"/><ellipse cx="${o.x+.83*o.w}" cy="${o.y+o.h/2}" rx="${.13*o.w}" ry="${o.h/2}" stroke="#e03e3e"/></g>`;
  }
 }
@@ -140,7 +154,7 @@ function ctxHTML(){
  case 't':return `<textarea id="txin" maxlength="2000" rows="3" aria-label="Texto de la pizarra. Enter para una nueva línea" style="width:240px;resize:vertical">${esc(s.txt)}</textarea>`+b('adj','ts:-','A−')+b('adj','ts:+','A+')+['√','²','³','⁴','ⁿ','ˣ'].map((c,i)=>b('ins',c,['√','x²','x³','x⁴','xⁿ','xˣ'][i])).join('')+b('del','','🗑️ Borrar')+'<span class="nt">Enter: nueva línea. También: ^2, ^3, ^5, ^n, ^x…</span>';
  case 'l':case 'p':return b('adj','sw:-','➖ Más delgada')+b('adj','sw:+','➕ Más gruesa')+b('del','','🗑️ Borrar');
  case 'd':return b('adj','k:-','➖ Pasos')+b('adj','k:+','➕ Pasos')+swb+end;
- case 'g':return b('adj','rows:-','➖ Filas')+b('adj','rows:+','➕ Filas')+b('adj','cols:-','➖ Columnas')+b('adj','cols:+','➕ Columnas')+swb+end;
+ case 'g':return b('pairs','','Completar pares')+b('adj','rows:-','➖ Filas')+b('adj','rows:+','➕ Filas')+b('adj','cols:-','➖ Columnas')+b('adj','cols:+','➕ Columnas')+swb+end;
  default:return b('adj','sz:-','➖ Tamaño')+b('adj','sz:+','➕ Tamaño')+swb+end;
  }
 }
@@ -158,7 +172,7 @@ function render(){draw();ui();cmr()}
 
 /* ---------- acciones ---------- */
 function add(it){it.id=newId();V.items.push(it);V.sel=it.id;V.tool='m'}
-function make(k){
+function make(k,config){
  hist();msgx='';const o=(V.cnt%5)*26;
  if(k==='v2'){const r={t:'r',x:130,y:90,w:740,h:380,c:'#1b2a41',sw:3};add(r);const R=r.id;add({t:'c',x:360,y:280,r:130,c:'#1e3a8a',sw:3.5});add({t:'c',x:600,y:280,r:130,c:'#1e3a8a',sw:3.5});V.sel=R}
  else if(k==='v3'){const r={t:'r',x:130,y:60,w:740,h:440,c:'#1b2a41',sw:3};add(r);const R=r.id;[[420,240],[580,240],[500,370]].forEach(q=>add({t:'c',x:q[0],y:q[1],r:120,c:'#1e3a8a',sw:3.5}));V.sel=R}
@@ -167,8 +181,12 @@ function make(k){
   if(k==='c')add({t:'c',x:400+o,y:280+o,r:100,c:'#1e3a8a',sw:3.5});
   if(k==='r')add({t:'r',x:150+o,y:100+o,w:700,h:340,...base});
   if(k==='d')add({t:'d',x:150+o,y:100+o,k:4,...base});
-  if(k==='g')add({t:'g',x:150+o,y:100+o,rows:3,cols:3,cw:90,ch:60,...base});
-  if(k==='x')add({t:'x',x:150+o,y:100+o,w:400,h:300,...base});
+  if(k==='g'||k==='x'){
+   const rows=clamp(Math.round(Number(config?.rows))||3,1,10),cols=clamp(Math.round(Number(config?.cols))||3,1,10);
+   const labels=config?{hLabels:Array.from({length:cols},(_,i)=>String(config.hLabels?.[i]??i+1).slice(0,24)),vLabels:Array.from({length:rows},(_,i)=>String(config.vLabels?.[i]??i+1).slice(0,24))}:{};
+   if(k==='g')add({t:'g',x:150+o,y:100+o,rows,cols,cw:120,ch:60,pairs:!!config?.pairs,...labels,...base});
+   else add({t:'x',x:150+o,y:100+o,w:Math.max(400,cols*65),h:Math.max(300,rows*45),rows,cols,...labels,...base});
+  }
   if(k==='o')add({t:'o',x:150+o,y:100+o,w:420,h:300,...base});
  }
  draw();ui();
@@ -224,7 +242,9 @@ function act(a,p){
  case 'clear':hist();V.items=[];V.fl=[];V.sel=null;draw();ui();break;
  case 'tool':V.tool=p;V.sel=null;msgx='';draw();ui();break;
  case 'clrfl':hist();V.fl=[];draw();ui();break;
- case 'mk':make(p);break;
+ case 'mk':if(p==='g'||p==='x')configureItem(p);else make(p);break;
+ case 'pairs':{const s=sel();if(s?.t==='g'){s.pairs=true;s.hLabels??=Array.from({length:s.cols},(_,i)=>String(i+1));s.vLabels??=Array.from({length:s.rows},(_,i)=>String(i+1));draw();ui();}break}
+ case 'prodPairs':{const a=pList(P.eA),b=pList(P.eB);P.th={a:a.slice(),b:b.slice()};P.tb={};a.forEach((x,i)=>b.forEach((y,j)=>P.tb[`${i},${j}`]=`(${x}; ${y})`));cmr();break}
  case 'col':setCol(p);break;
  case 'adj':adj(p);break;
  case 'dup':dup();break;
@@ -340,6 +360,7 @@ function cmProd(){
  if(P.view==='lista'){
   h+=`<div class="card"><b>${esc(P.nA)} × ${esc(P.nB)} = {</b><textarea data-f="li" rows="5" style="width:100%;font-size:16px" placeholder="Escribe aquí los pares…">${esc(P.li)}</textarea><b>}</b></div>`;
  }else if(P.view==='tabla'){
+  h+='<button data-a="prodPairs">Completar pares</button>';
   h+=`<table id="tbl"><tr><td></td>${b.map((_,j)=>`<td><input data-f="th" data-s="b" data-i="${j}" size="4" maxlength="6" style="font-weight:700;text-align:center" placeholder="…" value="${esc(P.th.b[j]||'')}"></td>`).join('')}</tr>`;
   a.forEach((_,i)=>{h+=`<tr><td><input data-f="th" data-s="a" data-i="${i}" size="4" maxlength="6" style="font-weight:700;text-align:center" placeholder="…" value="${esc(P.th.a[i]||'')}"></td>`+b.map((_,j)=>`<td><input data-f="tb" data-k="${i},${j}" size="8" maxlength="14" style="text-align:center" value="${esc(cellVal(i,j,a,b))}"></td>`).join('')+'</tr>'});
   h+=`</table><p class="sub">Completa los números de arriba y de la izquierda: los pares salen solos en cada casilla.</p>`;
@@ -473,7 +494,7 @@ cm.addEventListener('pointerup',e=>{
 
 render();
 
-export const arithmetic={V,P,render,draw,ui,cmr,get tab(){return tab},get dragging(){return !!D||!!D2},cancel(){D=null;D2=null},init(h){newId=h.newId;undoShared=h.undo},resetContext(){lastCtx=''}};
+export const arithmetic={V,P,render,draw,ui,cmr,make,get tab(){return tab},get dragging(){return !!D||!!D2},cancel(){D=null;D2=null},init(h){newId=h.newId;undoShared=h.undo;configureItem=h.configure||configureItem},resetContext(){lastCtx=''}};
 
 
 

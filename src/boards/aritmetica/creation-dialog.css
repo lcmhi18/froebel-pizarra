@@ -1,0 +1,12 @@
+#creation-dialog{width:min(560px,calc(100vw - 24px));max-height:90dvh;overflow:auto;border:2px solid #8bbfff;border-radius:20px;padding:24px;background:var(--cd);color:var(--tx);box-shadow:0 16px 60px #08278355}
+#creation-dialog::backdrop{background:#08278366}
+#creation-dialog h2{margin:0 0 18px;font-size:22px}
+#creation-dialog form>label,#creation-dialog .creation-counts label{display:flex;flex-direction:column;gap:6px;font-weight:700;margin-bottom:14px}
+#creation-dialog input[type=number],#creation-dialog textarea{width:100%;padding:9px;border:1px solid #9ec5ff;border-radius:8px;background:var(--cd);color:var(--tx)}
+#creation-dialog .creation-counts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#creation-dialog .creation-pairs{flex-direction:row;align-items:center;gap:10px}
+#creation-dialog .creation-pairs[hidden]{display:none}
+#creation-dialog input[type=checkbox]{width:20px;height:20px;flex:none}
+#creation-dialog p{font-size:14px;line-height:1.5}
+#creation-dialog .creation-error{color:#bd1f32}
+#creation-dialog .creation-actions{display:flex;justify-content:flex-end;gap:12px}

@@ -4,6 +4,7 @@ import {TestBoardAdapter} from '../prueba/adapter';
 import {attachLive} from '../../live/attach';
 import {emptyState} from '../../shared/protocol';
 import {productFields,restoreProduct} from './shared-state.js';
+import {creationDialog} from './creation-dialog.js';
 const defaults=structuredClone(board.P),adapter=new TestBoardAdapter();
 let applying=false;const events=new WeakMap();
 function capture(final=true){
@@ -36,13 +37,14 @@ function decorate(){
 adapter.subscribe(()=>{if(applying)return;redraw();});
 window.FroebelBoard={id:'aritmetica',adapter};
 const live=attachLive(adapter,{boardId:'aritmetica',workspace:document.getElementById('arithmetic-workspace'),slot:document.getElementById('live-slot')});
-board.init({newId:()=>live.engine.newId(),undo:()=>live.engine.undo()});
+const configure=creationDialog(board,()=>!adapter.readOnly,()=>capture());
+board.init({newId:()=>live.engine.newId(),undo:()=>live.engine.undo(),configure});
 // Capture before legacy handlers can replace their own event target.
 for(const type of ['click','input','change','pointerdown','pointermove','pointerup','pointercancel','keydown'])document.addEventListener(type,event=>{
  const target=event.target;
  const finishingDrag=board.dragging&&['pointermove','pointerup','pointercancel'].includes(type);
  if(!target.closest?.('#arithmetic-workspace,#top')&&!finishingDrag)return;
- const local=target.closest?.('#tabs,#live-slot,#hide-upper,#hide-lower,[data-a="big"],[data-a="snap"],[data-v]');
+ const local=target.closest?.('#tabs,#live-slot,#creation-dialog,#hide-upper,#hide-lower,[data-a="big"],[data-a="snap"],[data-v]');
  if(adapter.readOnly&&!local){event.preventDefault();event.stopImmediatePropagation();return;}
  events.set(event,{local,dragging:board.dragging});
 },true);
