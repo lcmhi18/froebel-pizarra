@@ -27,6 +27,7 @@
     "test:e8": "npm run build && npm run test:engine && node scripts/test-navigation.mjs && npm run test:e5 && npm run test:e2 && npm run test:scaffold && npm run test:sim",
     "test:geometry": "node scripts/test-geometry.mjs",
     "test:arithmetic": "node --test tests/arithmetic/*.test.mjs",
+    "test:reasoning": "node --test tests/reasoning/*.test.mjs",
     "test:e9": "npm run test:e8 && npm run test:geometry",
     "test:equivalence": "node scripts/test-equivalence.mjs",
     "test:e10": "npm run test:e9 && npm run test:equivalence",

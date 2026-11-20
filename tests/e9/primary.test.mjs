@@ -11,7 +11,7 @@ async function portal(signedIn=true){
  const elements=new Map();
  const make=(dataset={})=>({dataset,hidden:false,value:'',classList:{add(){},remove(){}},listeners:{},addEventListener(type,fn){this.listeners[type]=fn;},setAttribute(key,value){this[key]=value;},removeAttribute(key){delete this[key];},focus(){}});
  const element=selector=>{if(!elements.has(selector))elements.set(selector,make());return elements.get(selector);};
- const levels=[make({level:'primaria'}),make({level:'secundaria'})],subjects=[make({subject:'geometria'}),make({subject:'aritmetica'})],destinations=[];
+ const levels=[make({level:'primaria'}),make({level:'secundaria'})],subjects=[make({subject:'geometria'}),make({subject:'aritmetica'}),make({subject:'razonamiento'}),make({subject:'algebra'})],destinations=[];
  const auth={onAuthStateChange(){},getSession:async()=>({data:{session:signedIn?{user:{id:'offline-teacher'}}:null}})};
  const supabase={auth,from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:{role:'teacher',status:'active'}})})})})};
  const context=vm.createContext({createClient:()=>supabase,geometryDestination,document:{querySelector:element,querySelectorAll:selector=>selector==='[data-level]'?levels:selector==='[data-subject]'?subjects:[],addEventListener(){}},location:{assign:url=>destinations.push(url)},setTimeout,homeHeader:'home',courseHeader:'course',primaryDesktop:'p',secondaryDesktop:'s',primaryTitle:'pt',secondaryTitle:'st',primaryGeometry:'pg',secondaryGeometry:'sg',primaryArithmetic:'pa',secondaryArithmetic:'sa'});
@@ -23,6 +23,8 @@ test('el recorrido real Primaria → Geometría abre la pizarra Konva completa',
 test('Secundaria conserva su propia entrada de geometría',async()=>{const p=await portal();p.levels[1].listeners.click();p.subjects[0].listeners.click();assert.deepEqual(p.destinations,['/boards/geometria/']);assert.equal(p.elements.get('.geometry-choice')['aria-label'],'Geometría · Secundaria');});
 
 test('Primaria → Aritmética abre la nueva pizarra de conjuntos',async()=>{const p=await portal();p.levels[0].listeners.click();p.subjects[1].listeners.click();assert.deepEqual(p.destinations,['/boards/aritmetica/']);});
+test('Primaria → Razonamiento Matemático abre perímetro y área',async()=>{const p=await portal();p.levels[0].listeners.click();assert.equal(p.elements.get('.primary-extra-cards').hidden,false);p.subjects[2].listeners.click();assert.deepEqual(p.destinations,['/boards/razonamiento/']);});
+test('Álgebra tiene su propio curso y las nuevas tarjetas solo aparecen en Primaria',async()=>{const p=await portal();p.levels[0].listeners.click();p.subjects[3].listeners.click();assert.equal(p.elements.get('#subject-title').textContent,'Álgebra · Primaria');p.levels[1].listeners.click();assert.equal(p.elements.get('.primary-extra-cards').hidden,true);});
 test('el acceso de cursos sigue requiriendo una sesión autorizada',async()=>{const p=await portal(false);p.levels[0].listeners.click();p.subjects[0].listeners.click();assert.deepEqual(p.destinations,[]);});
 
 const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jD1sAAAAASUVORK5CYII=';

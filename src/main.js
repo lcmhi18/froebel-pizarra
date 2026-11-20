@@ -123,6 +123,7 @@ function showLevel(level) {
   $('#home-screen').hidden = true;
   $('#subject-screen').hidden = true;
   $('#level-screen').hidden = false;
+  $('.primary-extra-cards').hidden = level !== 'primaria';
   $('#student-panel').classList.add('course-open');
   $('#panel-header-image').src = courseHeader;
   $('#level-title').textContent = assets.name;
@@ -132,16 +133,19 @@ function showLevel(level) {
   $('#arithmetic-image').src = assets.arithmetic;
   $('.geometry-choice').setAttribute('aria-label', `Geometría · ${assets.name}`);
   $('.arithmetic-choice').setAttribute('aria-label', `Aritmética · ${assets.name}`);
+  $('.primary-extra-cards').hidden = level !== 'primaria';
   $('#level-title').focus();
 }
 document.querySelectorAll('[data-level]').forEach(button => button.addEventListener('click', () => showLevel(button.dataset.level)));
 document.querySelectorAll('[data-subject]').forEach(button => button.addEventListener('click', () => {
   if (!authenticated) return;
   if (button.dataset.subject === 'aritmetica' && currentLevel === 'primaria') { location.assign('/boards/aritmetica/'); return; }
+  if (button.dataset.subject === 'razonamiento' && currentLevel === 'primaria') { location.assign('/boards/razonamiento/'); return; }
   if (button.dataset.subject === 'geometria') { location.assign(geometryDestination(currentLevel)); return; }
   $('#level-screen').hidden = true;
   $('#subject-screen').hidden = false;
-  $('#subject-title').textContent = `${button.dataset.subject === 'geometria' ? 'Geometría' : 'Aritmética'} · ${courseAssets[currentLevel].name}`;
+  const subjects = {geometria:'Geometría',aritmetica:'Aritmética',razonamiento:'Razonamiento Matemático',algebra:'Álgebra'};
+  $('#subject-title').textContent = `${subjects[button.dataset.subject]} · ${courseAssets[currentLevel].name}`;
   $('#subject-title').focus();
 }));
 $('#subject-back').addEventListener('click', () => showLevel(currentLevel));
