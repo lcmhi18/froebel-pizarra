@@ -1,0 +1,39 @@
+/* Geometry's blue, white and yellow palette; local to this board. */
+:root{--surface:#fff;--ink:#082783;--edge:#a1cfff;background:#dff5ff;color:#082783}
+body{background:linear-gradient(#ecfaff,#ccefff);color:#082783}
+header{background:linear-gradient(135deg,#0876ff,#0737e6 70%);border-radius:0 0 20px 20px;box-shadow:0 4px #90d9ff;margin-bottom:12px}
+h1{background:none;box-shadow:none;text-shadow:none;letter-spacing:-.025em;font-size:clamp(23px,2.6vw,39px);text-align:left;padding:7px 0}
+h1 .parenthesis,h1 .bracket,h1 .brace{color:white}
+button,.home{background:linear-gradient(#fff,#edf7ff);color:#082783;border:1px solid #9ec5ff;border-radius:14px;box-shadow:0 3px #b3dcfa;text-shadow:none}
+button.green,button.purple,.tools button.active{background:linear-gradient(#fff640,#ffd600);color:#102969;border:1px solid #f2ba00;box-shadow:0 3px #e4ad00;text-shadow:none}
+button:focus-visible,a:focus-visible,input:focus-visible{outline-color:#f2ad00}
+form label,.examples>b{background:#e1f3ff;color:#082783;border-color:#9ec5ff}
+input{border:2px solid #9ec5ff;border-radius:16px}
+.examples button{border-radius:16px}
+.examples button:first-child{background:#fff3aa;border-color:#f2ba00}
+.order,.tools{border:2px solid #a3d5ff;border-radius:20px;background:#f8fdff;box-shadow:inset 0 0 0 3px #fff,0 3px #c3eaff}
+.order{padding:9px}
+.order-heading{display:flex;align-items:center;gap:5px;background:#e6f4ff;color:#082783;border-radius:13px;padding:5px 5px 5px 10px}
+.order-heading h2{font-size:clamp(18px,1.65vw,26px);line-height:1.15;margin:0;flex:1;min-width:0}
+.order-heading button{flex:0 0 44px;width:44px;height:44px;padding:9px;min-height:44px}
+.order-heading button img{width:23px;height:23px}
+#collapse-order[aria-expanded=false] img{transform:rotate(180deg)}
+#start{background:#fff7cf;border:1px solid #ffdd69;color:#082783;border-radius:12px;font-size:clamp(14px,1.15vw,18px)}
+.rule{background:#eef8ff;border:1px solid #cce4ff;border-radius:14px;color:#082783}
+.rule h2{color:#082783}.rule-number,.rule-1 .rule-number,.rule-2 .rule-number,.rule-3 .rule-number,.rule-4 .rule-number,.rule-5 .rule-number{background:#0783f7;border-color:white}
+.rule-status{background:#e1e9f3;color:#4e6480}.active .rule-status{background:#fff3a6;color:#082783}
+.board-wrap{border:2px solid #8bbfff;background:#fff;border-radius:20px;box-shadow:0 3px #c3eaff;padding:3px}
+.board{background:#fff;color:#082783;border:0;border-radius:14px;box-shadow:none;min-height:430px}
+.tag{background:#e5f3ff;border:2px solid #9ec5ff;color:#082783;border-radius:14px}
+.focus{background:#fff0a1;text-decoration-color:#df9900}.result,.answer-number{background:#fff02b;color:#112313}
+.tools{color:#082783}.tools #colors{border-color:#a3d5ff}#colors button[aria-pressed=true]{outline-color:#1263f5}
+.frog p{background:#fff7cf;color:#082783;border-color:#ffdd69;border-radius:24px}
+.navigation output{background:#e6f4ff;border-color:#9ec5ff;box-shadow:0 3px #b3dcfa;color:#082783;border-radius:18px}
+#show-order{margin:0 0 12px;min-height:44px}
+.lesson-layout.order-hidden,.froebel-live-layout .lesson-layout.order-hidden{grid-template-columns:minmax(0,1fr)}
+.lesson-layout.order-collapsed:not(.order-hidden),.froebel-live-layout .lesson-layout.order-collapsed:not(.order-hidden){grid-template-columns:76px minmax(0,1fr)}
+.order-collapsed .order-heading{flex-direction:column;padding:4px;gap:9px}.order-collapsed .order-heading h2{display:none}.order-collapsed .order{padding:5px}
+@media(max-width:760px){header{padding:9px}.order-heading h2{font-size:21px}.board{min-height:350px}.order-collapsed .order-heading{flex-direction:row}.order-collapsed .order-heading h2{display:block}.order-collapsed .order{width:100%}}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--surface:#233f65;--ink:#eef5ff;background:#101e35;color:#eef5ff}:root:not([data-theme=light]) body{background:#101e35;color:#eef5ff}}
+:root[data-theme=dark]{--surface:#233f65;--ink:#eef5ff;background:#101e35;color:#eef5ff}:root[data-theme=dark] body{background:#101e35;color:#eef5ff}
+:root[data-theme=dark] .order,:root[data-theme=dark] .tools{background:#1b3150;border-color:#557ca7;box-shadow:none;color:#eef5ff}

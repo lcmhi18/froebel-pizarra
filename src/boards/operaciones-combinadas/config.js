@@ -1,7 +1,7 @@
 export const CONFIG={
  maxSteps:60,maxInput:4096,
  examples:['30 − [12 − (5 × 3 − 20)]','−8 + 5 × (−4) − 12 ÷ (−3)','3 × 2 − 7 + 5 × (12 − 20)','−2 × {3 − [17 − 5 × 2 − 32 ÷ 8]}'],
- colors:{parenthesis:'#54dcff',bracket:'#ffab18',brace:'#ff68cf',highlight:'#fff02b'},
+ colors:{parenthesis:'#007bbd',bracket:'#c75e00',brace:'#bd1987',highlight:'#fff02b'},
  drawing:{pen:{width:5,opacity:1},highlighter:{width:24,opacity:.4}},
  rules:[
   {key:'(',title:'Paréntesis',symbol:'( )',when:'Primero, resuelve lo que está dentro del paréntesis.',example:'(5 − 3) = 2'},

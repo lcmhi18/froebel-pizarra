@@ -32,3 +32,11 @@ final result: passed
 Comparación conjunta de la imagen `d52685bf-0c88-48ba-9fb7-6ab3b46d416e.png` y `.e10-test/operaciones-desktop.png`. Conserva la composición de panel a la izquierda y pizarra verde a la derecha, encabezado morado, grupos de colores, resultado amarillo, rana con globo y controles grandes. La referencia contiene varias etapas juntas; la captura muestra el paso 2 real. Se adaptaron las proporciones a 1536 px y la página crece según el procedimiento.
 
 Se corrigió el contraste de las tarjetas y contador en modo oscuro y se verificó de nuevo. Diferencias de detalle: rana reutilizada, iconos Phosphor de línea, sin adornos de estrellas ni nube adicional dentro del tablero. No es una copia píxel por píxel; los adornos no sustituyen las funciones.
+
+## Ajuste solicitado: estilo de Geometría y panel lateral
+
+La última indicación del usuario sustituye la paleta morada y el marco de madera por el estilo azul/blanco/amarillo de Geometría. El procedimiento conserva los grupos coloreados y el resaltado de resultados. El lienzo es blanco y la interfaz mantiene modo oscuro.
+
+El panel dispone de flecha para reducir/expandir y X para ocultar. Al reducirlo queda una barra estrecha; al cerrarlo, el procedimiento usa toda la fila. El botón «Mostrar ¿Por dónde empiezo?» recupera el panel. Es una preferencia local de presentación; no cambia la lección compartida. ResizeObserver adapta el canvas.
+
+Revisión real en 1440 px: ancho del marco aproximado 900.5 px abierto, 1294.8 px reducido y 1388.8 px oculto. Se probó restaurar y avanzar de paso. Compilación completa y 27 pruebas del motor correctas.
