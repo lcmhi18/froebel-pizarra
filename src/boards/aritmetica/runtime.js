@@ -24,10 +24,15 @@ function undo(){undoShared()}
 
 /* ---------- geometría ---------- */
 function segD(p,a,b,c,d){const dx=c-a,dy=d-b,l=dx*dx+dy*dy;let t=l?((p.x-a)*dx+(p.y-b)*dy)/l:0;t=clamp(t,0,1);return Math.hypot(p.x-(a+t*dx),p.y-(b+t*dy))}
+function tableLayout(o){
+ const fs=o.fs??30,h=o.hLabels||[],v=o.vLabels||[];
+ const longest=Math.max(1,...h.map(x=>String(x).length),...v.map(x=>String(x).length),...(o.pairs?h.flatMap(x=>v.map(y=>String(x).length+String(y).length+4)):[]));
+ return {fs,cw:Math.max(o.cw,longest*fs*.6+24),ch:Math.max(o.ch,fs*1.6)};
+}
 function bb(o){switch(o.t){
  case 'd':return{x:o.x-30,y:o.y-26,w:100*(o.k+1)+40,h:90*o.k+130};
- case 'g':return{x:o.x,y:o.y,w:(o.cols+1)*o.cw,h:(o.rows+1)*o.ch};
- case 'x':return{x:o.x-10,y:o.y-16,w:o.w+26,h:o.h+26};
+ case 'g':{const {cw,ch}=tableLayout(o);return{x:o.x,y:o.y,w:(o.cols+1)*cw,h:(o.rows+1)*ch}}
+ case 'x':{const fs=o.fs??30,pad=Math.max(16,...(o.vLabels||[]).map(x=>String(x).length*fs*.6+10));return{x:o.x-pad,y:o.y-16,w:o.w+pad+16,h:o.h+fs+40}}
  case 'o':return{x:o.x,y:o.y,w:o.w,h:o.h};
  case 't':{const lines=o.txt.split('\n'),w=Math.max(24,.55*o.s*Math.max(...lines.map(line=>line.length))+8);return{x:o.x-w/2,y:o.y-.6*o.s,w,h:1.2*o.s+(lines.length-1)*1.25*o.s}}
 }}
@@ -48,25 +53,25 @@ function itemSVG(o,L){
  case 'r':return `<rect class="it" x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" ${st}/>`;
  case 'l':return `<line class="it" x1="${o.x1}" y1="${o.y1}" x2="${o.x2}" y2="${o.y2}" stroke="${o.c}" stroke-width="${o.w}" stroke-linecap="round"/>`;
  case 'p':return `<path class="it" d="M${o.d.map(q=>q[0].toFixed(1)+' '+q[1].toFixed(1)).join('L')}" fill="none" stroke="${o.c}" stroke-width="${o.w}" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>`;
- case 't':return `<text class="it" x="${o.x}" y="${o.y}" font-size="${o.s}" font-weight="700" fill="${o.c}" text-anchor="middle" dominant-baseline="central" style="white-space:pre">${o.txt.split('\n').map((line,i)=>`<tspan x="${o.x}" y="${o.y+i*1.25*o.s}">${esc(line)}</tspan>`).join('')}</text>`;
+ case 't':return `<text class="it" x="${o.x}" y="${o.y}" font-size="${o.s}" font-weight="${o.bold===false?400:700}" fill="${o.c}" text-anchor="middle" dominant-baseline="central" style="white-space:pre">${o.txt.split('\n').map((line,i)=>`<tspan x="${o.x}" y="${o.y+i*1.25*o.s}">${esc(line)}</tspan>`).join('')}</text>`;
  case 'd':{let h='';for(let i=0;i<o.k;i++){const a=o.x+100*i,b=o.y+90*i;h+=`<line x1="${a+35}" y1="${b-26}" x2="${a+35}" y2="${b+12}"/><line x1="${a+35}" y1="${b+12}" x2="${a+100}" y2="${b+12}"/><line x1="${a-30}" y1="${b+86}" x2="${a+30}" y2="${b+86}"/>`}
   return `<g class="it" stroke="${o.c}" stroke-width="${o.sw}" stroke-linecap="round" fill="none">${h}<rect x="${o.x-30}" y="${o.y-26}" width="${100*(o.k+1)+40}" height="${90*o.k+130}" fill="transparent" stroke="none"/></g>`}
- case 'g':{let h='';const W=(o.cols+1)*o.cw,H=(o.rows+1)*o.ch;for(let j=0;j<=o.rows+1;j++)h+=`<line x1="${o.x}" y1="${o.y+j*o.ch}" x2="${o.x+W}" y2="${o.y+j*o.ch}"/>`;for(let i=0;i<=o.cols+1;i++)h+=`<line x1="${o.x+i*o.cw}" y1="${o.y}" x2="${o.x+i*o.cw}" y2="${o.y+H}"/>`;
+ case 'g':{let h='';const {fs,cw,ch}=tableLayout(o),W=(o.cols+1)*cw,H=(o.rows+1)*ch;for(let j=0;j<=o.rows+1;j++)h+=`<line x1="${o.x}" y1="${o.y+j*ch}" x2="${o.x+W}" y2="${o.y+j*ch}"/>`;for(let i=0;i<=o.cols+1;i++)h+=`<line x1="${o.x+i*cw}" y1="${o.y}" x2="${o.x+i*cw}" y2="${o.y+H}"/>`;
   if(o.hLabels||o.vLabels){
-   h+=`<g stroke="none" fill="${o.c}" font-size="18" text-anchor="middle" dominant-baseline="central">`;
-   for(let i=0;i<o.cols;i++)h+=`<text x="${o.x+(i+1.5)*o.cw}" y="${o.y+o.ch/2}">${esc(o.hLabels?.[i]??i+1)}</text>`;
+   h+=`<g stroke="none" fill="${o.c}" font-size="${fs}" font-weight="${o.bold===false?400:700}" text-anchor="middle" dominant-baseline="central">`;
+   for(let i=0;i<o.cols;i++)h+=`<text x="${o.x+(i+1.5)*cw}" y="${o.y+ch/2}">${esc(o.hLabels?.[i]??i+1)}</text>`;
    for(let j=0;j<o.rows;j++){
-    h+=`<text x="${o.x+o.cw/2}" y="${o.y+(j+1.5)*o.ch}">${esc(o.vLabels?.[j]??j+1)}</text>`;
-    if(o.pairs)for(let i=0;i<o.cols;i++)h+=`<text x="${o.x+(i+1.5)*o.cw}" y="${o.y+(j+1.5)*o.ch}" font-size="15">${esc(`(${o.hLabels?.[i]??i+1}; ${o.vLabels?.[j]??j+1})`)}</text>`;
+    h+=`<text x="${o.x+cw/2}" y="${o.y+(j+1.5)*ch}">${esc(o.vLabels?.[j]??j+1)}</text>`;
+    if(o.pairs)for(let i=0;i<o.cols;i++)h+=`<text x="${o.x+(i+1.5)*cw}" y="${o.y+(j+1.5)*ch}">${esc(`(${o.hLabels?.[i]??i+1}; ${o.vLabels?.[j]??j+1})`)}</text>`;
    }
    h+='</g>';
   }
   return `<g class="it" stroke="${o.c}" stroke-width="${o.sw}" stroke-linecap="round" fill="none">${h}<rect x="${o.x}" y="${o.y}" width="${W}" height="${H}" fill="transparent" stroke="none"/></g>`}
- case 'x':{const X=o.x,Y=o.y,W=o.w,H=o.h;
+ case 'x':{const X=o.x,Y=o.y,W=o.w,H=o.h,fs=o.fs??30,weight=o.bold===false?400:700;
   let labels='';
   if(o.hLabels||o.vLabels){
-   for(let i=0;i<o.cols;i++){const x=X+(i+1)*W/(o.cols+1);labels+=`<line x1="${x}" y1="${Y+H-5}" x2="${x}" y2="${Y+H+5}"/><text stroke="none" fill="${o.c}" font-size="18" text-anchor="middle" x="${x}" y="${Y+H+24}">${esc(o.hLabels?.[i]??i+1)}</text>`;}
-   for(let j=0;j<o.rows;j++){const y=Y+H-(j+1)*H/(o.rows+1);labels+=`<line x1="${X-5}" y1="${y}" x2="${X+5}" y2="${y}"/><text stroke="none" fill="${o.c}" font-size="18" text-anchor="end" x="${X-10}" y="${y+6}">${esc(o.vLabels?.[j]??j+1)}</text>`;}
+   for(let i=0;i<o.cols;i++){const x=X+(i+1)*W/(o.cols+1);labels+=`<line x1="${x}" y1="${Y+H-5}" x2="${x}" y2="${Y+H+5}"/><text stroke="none" fill="${o.c}" font-size="${fs}" font-weight="${weight}" text-anchor="middle" x="${x}" y="${Y+H+fs+8}">${esc(o.hLabels?.[i]??i+1)}</text>`;}
+   for(let j=0;j<o.rows;j++){const y=Y+H-(j+1)*H/(o.rows+1);labels+=`<line x1="${X-5}" y1="${y}" x2="${X+5}" y2="${y}"/><text stroke="none" fill="${o.c}" font-size="${fs}" font-weight="${weight}" text-anchor="end" x="${X-10}" y="${y+fs*.33}">${esc(o.vLabels?.[j]??j+1)}</text>`;}
   }
   return `<g class="it" stroke="${o.c}" stroke-width="${o.sw}" stroke-linecap="round" fill="none"><line x1="${X}" y1="${Y+H}" x2="${X+W}" y2="${Y+H}"/><line x1="${X}" y1="${Y+H}" x2="${X}" y2="${Y}"/><polygon fill="${o.c}" points="${X+W+6},${Y+H} ${X+W-8},${Y+H-6} ${X+W-8},${Y+H+6}"/><polygon fill="${o.c}" points="${X},${Y-6} ${X-6},${Y+8} ${X+6},${Y+8}"/>${labels}<rect x="${X-10}" y="${Y-16}" width="${W+26}" height="${H+48}" fill="transparent" stroke="none"/></g>`}
  case 'o':return `<g class="it" stroke-width="${o.sw}" fill="none"><ellipse cx="${o.x+.17*o.w}" cy="${o.y+o.h/2}" rx="${.13*o.w}" ry="${o.h/2}" stroke="#2563eb"/><ellipse cx="${o.x+.83*o.w}" cy="${o.y+o.h/2}" rx="${.13*o.w}" ry="${o.h/2}" stroke="#e03e3e"/></g>`;
@@ -147,14 +152,17 @@ function ctxHTML(){
  if(V.tool!=='m')return '';const s=sel();if(!s)return '';
  const b=(a,p,t)=>`<button data-a="${a}" data-p="${p}">${t}</button>`;
  const swb=b('adj','sw:-','➖ Grosor')+b('adj','sw:+','➕ Grosor');
+ const bold=`<button data-a="bold" class="${s.bold!==false?'on':''}" aria-pressed="${s.bold!==false}">Negrita</button>`;
+ const font=b('adj','fs:-','A− Letra')+`<span class="lb">${s.fs??30} px</span>`+b('adj','fs:+','A+ Letra')+bold;
  const end=b('dup','','👯 Copiar')+b('del','','🗑️ Borrar');
  switch(s.t){
  case 'c':return b('adj','r:-','➖ Radio')+b('adj','r:+','➕ Radio')+swb+b('dup','','👯 Gemelo')+b('del','','🗑️ Borrar');
  case 'r':return b('adj','sz:-','➖ Tamaño')+b('adj','sz:+','➕ Tamaño')+swb+end;
- case 't':return `<textarea id="txin" maxlength="2000" rows="3" aria-label="Texto de la pizarra. Enter para una nueva línea" style="width:240px;resize:vertical">${esc(s.txt)}</textarea>`+b('adj','ts:-','A−')+b('adj','ts:+','A+')+['√','²','³','⁴','ⁿ','ˣ'].map((c,i)=>b('ins',c,['√','x²','x³','x⁴','xⁿ','xˣ'][i])).join('')+b('del','','🗑️ Borrar')+'<span class="nt">Enter: nueva línea. También: ^2, ^3, ^5, ^n, ^x…</span>';
+ case 't':return `<textarea id="txin" maxlength="2000" rows="3" aria-label="Texto de la pizarra. Enter para una nueva línea" style="width:240px;resize:vertical">${esc(s.txt)}</textarea>`+b('adj','ts:-','A−')+b('adj','ts:+','A+')+bold+['√','²','³','⁴','ⁿ','ˣ'].map((c,i)=>b('ins',c,['√','x²','x³','x⁴','xⁿ','xˣ'][i])).join('')+b('del','','🗑️ Borrar')+'<span class="nt">Enter: nueva línea. También: ^2, ^3, ^5, ^n, ^x…</span>';
  case 'l':case 'p':return b('adj','sw:-','➖ Más delgada')+b('adj','sw:+','➕ Más gruesa')+b('del','','🗑️ Borrar');
  case 'd':return b('adj','k:-','➖ Pasos')+b('adj','k:+','➕ Pasos')+swb+end;
- case 'g':return b('pairs','','Completar pares')+b('adj','rows:-','➖ Filas')+b('adj','rows:+','➕ Filas')+b('adj','cols:-','➖ Columnas')+b('adj','cols:+','➕ Columnas')+swb+end;
+ case 'g':return font+b('pairs','','Completar pares')+b('adj','rows:-','➖ Filas')+b('adj','rows:+','➕ Filas')+b('adj','cols:-','➖ Columnas')+b('adj','cols:+','➕ Columnas')+swb+end;
+ case 'x':return font+b('adj','sz:-','➖ Tamaño')+b('adj','sz:+','➕ Tamaño')+swb+end;
  default:return b('adj','sz:-','➖ Tamaño')+b('adj','sz:+','➕ Tamaño')+swb+end;
  }
 }
@@ -205,6 +213,7 @@ function adj(p){
  else if(k==='rows')s.rows=clamp(s.rows+u,1,10);
  else if(k==='cols')s.cols=clamp(s.cols+u,1,10);
  else if(k==='ts')s.s=clamp(s.s+8*u,18,120);
+ else if(k==='fs')s.fs=clamp((s.fs??30)+4*u,12,72);
  draw();ui();
 }
 function dup(){
@@ -247,6 +256,7 @@ function act(a,p){
  case 'prodPairs':{const a=pList(P.eA),b=pList(P.eB);P.th={a:a.slice(),b:b.slice()};P.tb={};a.forEach((x,i)=>b.forEach((y,j)=>P.tb[`${i},${j}`]=`(${x}; ${y})`));cmr();break}
  case 'col':setCol(p);break;
  case 'adj':adj(p);break;
+ case 'bold':{const s=sel();if(s&&['g','x','t'].includes(s.t)){s.bold=s.bold===false;draw();ui();}break}
  case 'dup':dup();break;
  case 'del':del();break;
  case 'ins':ins(p);break;

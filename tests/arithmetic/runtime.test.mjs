@@ -54,6 +54,16 @@ test('plano cartesiano usa las dimensiones y etiquetas ingresadas sin interpreta
  assert.equal(item.cols,4);assert.equal(item.rows,2);assert(h.html('#vs').includes('&lt;8&gt;'));
  assert(h.html('#vs').includes('>y</text>'));assert(!/NaN|Infinity/.test(h.html('#vs')));
 });
+
+for(const type of ['g','x'])test(`letras de ${type}: tamaño y negrita independientes del grosor del dibujo`,()=>{
+ const h=harness();h.run(`make('${type}',{rows:2,cols:2,hLabels:['a','b'],vLabels:['1','2'],pairs:true});return null`);
+ assert(h.html('#vs').includes('font-size="30"'));assert(h.html('#vs').includes('font-weight="700"'));
+ const result=h.run(`const before=clone(sel());adj('fs:+');act('bold');return {before,after:sel(),controls:ctxHTML()}`);
+ assert.equal(result.after.fs,34);assert.equal(result.after.bold,false);assert.equal(result.after.sw,result.before.sw);
+ assert.deepEqual(result.after.hLabels,result.before.hLabels);assert(h.html('#vs').includes('font-weight="400"'));
+ assert(result.controls.includes('A+ Letra'));assert(result.controls.includes('aria-pressed="false"'));
+ h.run(`adj('fs:-');act('bold');return null`);assert(h.html('#vs').includes('font-size="30"'));assert(h.html('#vs').includes('font-weight="700"'));
+});
 test('completar pares en la vista de tabla rellena encabezados y producto completo',()=>{
  const h=harness();const result=h.run(`P.eA='a;b';P.eB='1;2;3';P.view='tabla';act('prodPairs');return {tb:P.tb,th:P.th,html:cmProd()}`);
  assert.equal(Object.keys(result.tb).length,6);assert.equal(result.tb['1,2'],'(b; 3)');assert.deepEqual(result.th,{a:['a','b'],b:['1','2','3']});
