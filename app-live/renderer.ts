@@ -1,9 +1,11 @@
 import Konva from 'konva';
+import {isGeometryImageUrl} from '../src/boards/geometria/image-source';
 
 type Tile={node:Konva.Image;key:string;revision:number};
 const NS='http://www.w3.org/2000/svg';
 const formulaImages=new Map<string,Promise<string>>();
 async function localImage(path:string){
+ if(path.startsWith('data:')&&isGeometryImageUrl(path))return path;
  if(!/^\/geometry-assets\/formula-[1-5]\.jpg$/.test(path))throw new Error('Unsupported formula image');
  if(!formulaImages.has(path))formulaImages.set(path,fetch(path).then(async response=>{
   if(!response.ok)throw new Error('Formula image unavailable');
@@ -35,8 +37,7 @@ export function mountKonva(svg:SVGSVGElement){
    if(![box.x,box.y,box.width,box.height].every(Number.isFinite))throw new Error('Invalid bounds');
    const x=box.x-padding,y=box.y-padding,width=Math.max(1,box.width+padding*2),height=Math.max(1,box.height+padding*2);
    const clone=source.cloneNode(true) as SVGElement;
-   // SVG used as an image cannot fetch nested image URLs. Embed only the five
-   // trusted local formula assets, once per page, to preserve those cards.
+   // Embed the five local formulas. Bounded PNG paint regions are already inline.
    await Promise.all([...clone.querySelectorAll('image')].map(async image=>{const path=image.getAttribute('href');if(path)image.setAttribute('href',await localImage(path));}));
    if(disposed||tiles.get(id)!==tile||tile.revision!==revision)return;
    const root=document.createElementNS(NS,'svg');root.setAttribute('xmlns',NS);root.setAttribute('viewBox',`${x} ${y} ${width} ${height}`);

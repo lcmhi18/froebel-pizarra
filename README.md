@@ -1,6 +1,6 @@
 # Froebel Academy · Pizarra en vivo
 
-**Konva nueva disponible localmente en `/app-live/`.** Página independiente con React 18.3.1, las mismas herramientas de geometría y conexión a la sala. Se reutilizan los cálculos de este repositorio; el proyecto de la otra cuenta permanece intacto. [Implementación y límites](docs/KONVA-NUEVA.md). La comparación original de geometría está en [E10](docs/E10.md).
+**Primaria → Geometría abre la pizarra completa en `/app-live/`.** Página independiente con React 18.3.1, las mismas herramientas de geometría y conexión a la sala. Se reutilizan los cálculos de este repositorio; el proyecto de la otra cuenta permanece intacto. [Implementación y límites](docs/KONVA-NUEVA.md). Entrada y pintura verificadas: [Geometría de Primaria](docs/GEOMETRIA-PRIMARIA.md). La comparación original de geometría está en [E10](docs/E10.md).
 
 ## Iniciar localmente
 
@@ -23,8 +23,8 @@ La creación real requiere la sesión Supabase de un profesor u owner activo en 
 
 ## Verificar
 
-- `npm run test:e10`: build, 247 pruebas y simulación; compara construcciones y fórmulas con una referencia offline del HTML original. Ver [geometría](docs/E10.md) y [Konva](docs/KONVA-NUEVA.md).
-- `npm run test:e9`: build, 97 pruebas automáticas y simulación local, incluyendo geometría.
+- `npm run test:e10`: build, 253 pruebas y simulación; compara construcciones y fórmulas con una referencia offline del HTML original. Ver [geometría](docs/E10.md) y [Konva](docs/KONVA-NUEVA.md).
+- `npm run test:e9`: build, 103 pruebas automáticas y simulación local, incluyendo geometría.
 - `npm run test:e8`: build con tipos, 89 pruebas automáticas y simulación local completa de un profesor y seis alumnos. La simulación levanta y detiene su propio Worker en 8791, con datos aislados en `.e8-test/`.
 - `npm run test:sim`: solo esa simulación, sin navegador, servicios remotos ni despliegue.
 - `npm run test:engine`: 24 pruebas del motor, concurrencia y deshacer propio; diff de 500 objetos con límite p95 de 2 ms.

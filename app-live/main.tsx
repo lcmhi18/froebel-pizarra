@@ -10,6 +10,7 @@ import {mountKonva} from './renderer';
 const parsed=new DOMParser().parseFromString(shell,'text/html');
 parsed.querySelectorAll('script').forEach(node=>node.remove());
 parsed.querySelector('img')!.setAttribute('src',brand);
+parsed.querySelector('#top > b')!.textContent='🔺 Geometría de Primaria · Froebel Academy';
 const markup=parsed.body.innerHTML,baseStyle=parsed.querySelector('style')!.textContent!;
 const base=document.createElement('style');base.textContent=baseStyle;document.head.prepend(base);
 function App(){

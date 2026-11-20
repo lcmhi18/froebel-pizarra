@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { geometryDestination } from './course-navigation';
 import './login.css';
 import './style.css';
 import primaryDesktop from './assets/img/cursos/primaria-desktop.webp';
@@ -136,7 +137,7 @@ function showLevel(level) {
 document.querySelectorAll('[data-level]').forEach(button => button.addEventListener('click', () => showLevel(button.dataset.level)));
 document.querySelectorAll('[data-subject]').forEach(button => button.addEventListener('click', () => {
   if (!authenticated) return;
-  if (button.dataset.subject === 'geometria') { location.assign('/boards/geometria/'); return; }
+  if (button.dataset.subject === 'geometria') { location.assign(geometryDestination(currentLevel)); return; }
   $('#level-screen').hidden = true;
   $('#subject-screen').hidden = false;
   $('#subject-title').textContent = `${button.dataset.subject === 'geometria' ? 'Geometría' : 'Aritmética'} · ${courseAssets[currentLevel].name}`;
