@@ -31,6 +31,15 @@ for(const [kind,count] of [['v2',3],['v3',4],['c',1],['r',1],['d',1],['g',1],['x
  assert.equal(items.length,count);assert.equal(new Set(items.map(i=>i.id)).size,count);
  assert(!/NaN|Infinity|undefined/.test(h.html('#vs')));
 });
+
+test('el texto admite líneas vacías, conserva el escape y se puede seleccionar por la última línea',()=>{
+ const h=harness();const result=h.run(`const text={t:'t',x:300,y:100,s:36,txt:'24 + x = 25\\n\\nx = <1>',c:'#111111'};add(text);draw();return {box:bb(text),hit:hit(text,{x:300,y:190}),context:ctxHTML()}`);
+ assert(result.box.h>120);assert.equal(result.hit,true);
+ assert.equal((h.html('#vs').match(/<tspan /g)||[]).length,3);
+ assert(h.html('#vs').includes('y="190"'));
+ assert(h.html('#vs').includes('x = &lt;1&gt;'));
+ assert(result.context.includes('<textarea id="txin"'));
+});
 test('duplicar conserva el original y borrar elimina las regiones vinculadas',()=>{
  const h=harness();const result=h.run(`make('c');const first=clone(V.items[0]);V.fl=[{r:0,i:[first.id],c:'#2563eb'}];dup();del();V.sel=first.id;del();return {items:V.items,regions:V.fl}`);
  assert.deepEqual(result,{items:[],regions:[]});

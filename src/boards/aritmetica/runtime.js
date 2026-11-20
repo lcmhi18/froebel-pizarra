@@ -29,7 +29,7 @@ function bb(o){switch(o.t){
  case 'g':return{x:o.x,y:o.y,w:(o.cols+1)*o.cw,h:(o.rows+1)*o.ch};
  case 'x':return{x:o.x-10,y:o.y-16,w:o.w+26,h:o.h+26};
  case 'o':return{x:o.x,y:o.y,w:o.w,h:o.h};
- case 't':{const w=Math.max(24,.55*o.s*o.txt.length+8);return{x:o.x-w/2,y:o.y-.6*o.s,w,h:1.2*o.s}}
+ case 't':{const lines=o.txt.split('\n'),w=Math.max(24,.55*o.s*Math.max(...lines.map(line=>line.length))+8);return{x:o.x-w/2,y:o.y-.6*o.s,w,h:1.2*o.s+(lines.length-1)*1.25*o.s}}
 }}
 function hit(o,p){switch(o.t){
  case 'c':return Math.hypot(p.x-o.x,p.y-o.y)<=o.r+6;
@@ -48,7 +48,7 @@ function itemSVG(o,L){
  case 'r':return `<rect class="it" x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" ${st}/>`;
  case 'l':return `<line class="it" x1="${o.x1}" y1="${o.y1}" x2="${o.x2}" y2="${o.y2}" stroke="${o.c}" stroke-width="${o.w}" stroke-linecap="round"/>`;
  case 'p':return `<path class="it" d="M${o.d.map(q=>q[0].toFixed(1)+' '+q[1].toFixed(1)).join('L')}" fill="none" stroke="${o.c}" stroke-width="${o.w}" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>`;
- case 't':return `<text class="it" x="${o.x}" y="${o.y}" font-size="${o.s}" font-weight="700" fill="${o.c}" text-anchor="middle" dominant-baseline="central">${esc(o.txt)}</text>`;
+ case 't':return `<text class="it" x="${o.x}" y="${o.y}" font-size="${o.s}" font-weight="700" fill="${o.c}" text-anchor="middle" dominant-baseline="central" style="white-space:pre">${o.txt.split('\n').map((line,i)=>`<tspan x="${o.x}" y="${o.y+i*1.25*o.s}">${esc(line)}</tspan>`).join('')}</text>`;
  case 'd':{let h='';for(let i=0;i<o.k;i++){const a=o.x+100*i,b=o.y+90*i;h+=`<line x1="${a+35}" y1="${b-26}" x2="${a+35}" y2="${b+12}"/><line x1="${a+35}" y1="${b+12}" x2="${a+100}" y2="${b+12}"/><line x1="${a-30}" y1="${b+86}" x2="${a+30}" y2="${b+86}"/>`}
   return `<g class="it" stroke="${o.c}" stroke-width="${o.sw}" stroke-linecap="round" fill="none">${h}<rect x="${o.x-30}" y="${o.y-26}" width="${100*(o.k+1)+40}" height="${90*o.k+130}" fill="transparent" stroke="none"/></g>`}
  case 'g':{let h='';const W=(o.cols+1)*o.cw,H=(o.rows+1)*o.ch;for(let j=0;j<=o.rows+1;j++)h+=`<line x1="${o.x}" y1="${o.y+j*o.ch}" x2="${o.x+W}" y2="${o.y+j*o.ch}"/>`;for(let i=0;i<=o.cols+1;i++)h+=`<line x1="${o.x+i*o.cw}" y1="${o.y}" x2="${o.x+i*o.cw}" y2="${o.y+H}"/>`;
@@ -137,7 +137,7 @@ function ctxHTML(){
  switch(s.t){
  case 'c':return b('adj','r:-','➖ Radio')+b('adj','r:+','➕ Radio')+swb+b('dup','','👯 Gemelo')+b('del','','🗑️ Borrar');
  case 'r':return b('adj','sz:-','➖ Tamaño')+b('adj','sz:+','➕ Tamaño')+swb+end;
- case 't':return `<input id="txin" maxlength="20" style="width:150px" value="${esc(s.txt)}">`+b('adj','ts:-','A−')+b('adj','ts:+','A+')+['√','²','³','⁴','ⁿ','ˣ'].map((c,i)=>b('ins',c,['√','x²','x³','x⁴','xⁿ','xˣ'][i])).join('')+b('del','','🗑️ Borrar')+'<span class="nt">También: escribe ^2, ^3, ^5, ^n, ^x…</span>';
+ case 't':return `<textarea id="txin" maxlength="2000" rows="3" aria-label="Texto de la pizarra. Enter para una nueva línea" style="width:240px;resize:vertical">${esc(s.txt)}</textarea>`+b('adj','ts:-','A−')+b('adj','ts:+','A+')+['√','²','³','⁴','ⁿ','ˣ'].map((c,i)=>b('ins',c,['√','x²','x³','x⁴','xⁿ','xˣ'][i])).join('')+b('del','','🗑️ Borrar')+'<span class="nt">Enter: nueva línea. También: ^2, ^3, ^5, ^n, ^x…</span>';
  case 'l':case 'p':return b('adj','sw:-','➖ Más delgada')+b('adj','sw:+','➕ Más gruesa')+b('del','','🗑️ Borrar');
  case 'd':return b('adj','k:-','➖ Pasos')+b('adj','k:+','➕ Pasos')+swb+end;
  case 'g':return b('adj','rows:-','➖ Filas')+b('adj','rows:+','➕ Filas')+b('adj','cols:-','➖ Columnas')+b('adj','cols:+','➕ Columnas')+swb+end;
@@ -203,7 +203,7 @@ function del(){
 function ins(ch){
  const el=$('#txin'),s=sel();if(!el||!s)return;
  const a=el.selectionStart??el.value.length,b=el.selectionEnd??a;
- let v=el.value.slice(0,a)+ch+el.value.slice(b);if(v.length>20)return;
+ let v=el.value.slice(0,a)+ch+el.value.slice(b);if(v.length>2000)return;
  el.value=v;s.txt=v;el.focus();el.setSelectionRange(a+ch.length,a+ch.length);lastCtx=ctxHTML();draw();
 }
 function toggleBig(){
