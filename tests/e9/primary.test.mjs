@@ -21,6 +21,8 @@ async function portal(signedIn=true){
 }
 test('el recorrido real Primaria → Geometría abre la pizarra Konva completa',async()=>{const p=await portal();p.levels[0].listeners.click();p.subjects[0].listeners.click();assert.deepEqual(p.destinations,['/app-live/']);assert.equal(p.elements.get('.geometry-choice')['aria-label'],'Geometría · Primaria');});
 test('Secundaria conserva su propia entrada de geometría',async()=>{const p=await portal();p.levels[1].listeners.click();p.subjects[0].listeners.click();assert.deepEqual(p.destinations,['/boards/geometria/']);assert.equal(p.elements.get('.geometry-choice')['aria-label'],'Geometría · Secundaria');});
+
+test('Primaria → Aritmética abre la nueva pizarra de conjuntos',async()=>{const p=await portal();p.levels[0].listeners.click();p.subjects[1].listeners.click();assert.deepEqual(p.destinations,['/boards/aritmetica/']);});
 test('el acceso de cursos sigue requiriendo una sesión autorizada',async()=>{const p=await portal(false);p.levels[0].listeners.click();p.subjects[0].listeners.click();assert.deepEqual(p.destinations,[]);});
 
 const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jD1sAAAAASUVORK5CYII=';

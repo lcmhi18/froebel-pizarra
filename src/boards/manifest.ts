@@ -8,4 +8,5 @@ export const BOARD_MANIFEST = [
     localKeys: ['tool','col','sel','sd','snap','tab','hide','ang','largeBoard','hideOptions'], fieldKeys: ['protractor'] },
   { id: 'konva', title: 'Geometría de Primaria', path: '/app-live/', engine: 'konva',
     localKeys: ['tool','col','sel','sd','snap','tab','hide','ang','largeBoard','hideOptions'], fieldKeys: ['protractor'] },
+  { id:'aritmetica',title:'Aritmética de Primaria',path:'/boards/aritmetica/',engine:'svg-js',localKeys:['tool','selection','color','tab','view','hold','snap','largeBoard','hideUpper','hideLower'],fieldKeys:['regions'] },
 ] as const;

@@ -4,6 +4,23 @@ import { RoomEngine } from '../../src/live/engine';
 import { TestBoardAdapter } from '../../src/boards/prueba/adapter';
 import type { Op,BoardState,BoardId } from '../../src/shared/protocol';
 let ip=0;
+it('arithmetic shares content and drawings while undo preserves another author changes',async()=>{
+ const {teacher:t,student:s}=await room();
+ try{
+  t.send({type:'set_board',boardId:'aritmetica'});
+  await waitFor(()=>[t,s].every(p=>p.frames.some(m=>m.type==='snapshot_end'&&m.boardId==='aritmetica')));
+  const id=s.engine.newId();
+  s.adapter.change(state=>{state.items[id]={id,t:'c',x:360,y:280,r:130,c:'#2563eb'};state.order.push(id);state.fields['product:eA']='3;5';});
+  await waitFor(()=>!!t.adapter.getState().items[id]&&s.engine.pendingCount===0);
+  t.adapter.change(state=>{state.fields['product:eB']='y;z';state.fields.regions=[{r:0,i:[id],c:'#e03e3e'}];});
+  await waitFor(()=>s.adapter.getState().fields['product:eB']==='y;z'&&t.engine.pendingCount===0);
+  s.adapter.change(state=>{state.items[id].x=480;});
+  await waitFor(()=>t.adapter.getState().items[id].x===480&&s.engine.pendingCount===0);
+  s.engine.undo();await waitFor(()=>t.adapter.getState().items[id].x===360&&s.engine.pendingCount===0);
+  expect(t.adapter.getState()).toEqual(s.adapter.getState());
+  expect(s.adapter.getState().fields.regions).toEqual([{r:0,i:[id],c:'#e03e3e'}]);
+ }finally{t.dispose();s.dispose();}
+});
 const origin='http://localhost:5174';
 async function waitFor(check:()=>boolean){for(let i=0;i<300;i++){if(check())return;await new Promise(resolve=>setTimeout(resolve,5));}throw Error('Room/engine condition timed out');}
 class Peer{

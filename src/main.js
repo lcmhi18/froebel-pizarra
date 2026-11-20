@@ -137,6 +137,7 @@ function showLevel(level) {
 document.querySelectorAll('[data-level]').forEach(button => button.addEventListener('click', () => showLevel(button.dataset.level)));
 document.querySelectorAll('[data-subject]').forEach(button => button.addEventListener('click', () => {
   if (!authenticated) return;
+  if (button.dataset.subject === 'aritmetica' && currentLevel === 'primaria') { location.assign('/boards/aritmetica/'); return; }
   if (button.dataset.subject === 'geometria') { location.assign(geometryDestination(currentLevel)); return; }
   $('#level-screen').hidden = true;
   $('#subject-screen').hidden = false;
