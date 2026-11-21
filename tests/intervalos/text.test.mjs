@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {validGraphText,textLayout,readTextRuns} from '../../src/boards/intervalos/text.js';
+import {validLesson} from '../../src/boards/intervalos/model.js';
+const text={t:'text',runs:[{text:'x',sup:false},{text:'2',sup:true},{text:' ≥ 4\nx ≤ 8\nx = 3',sup:false}],fontSize:28,c:'#082783',x1:.1,y1:.1,x2:.9,y2:.9};
+test('multiline text and exponent runs validate and can be shared',()=>{assert.equal(validGraphText(text),true);const lesson={expression:'[1;4]',topic:0,shown:1,prof:false,work:'',strokes:[],graph:{rows:[{a:1,b:4,L:'c',R:'c',on:true}],operation:'n'},graphInk:[text],formulas:[]};assert.equal(validLesson(lesson),true);for(const patch of [{fontSize:1},{c:'url(x)'},{runs:[{text:'x',sup:'true'}]},{runs:[{text:'x'.repeat(4001),sup:false}]},{x2:2}])assert.equal(validGraphText({...text,...patch}),false);});
+test('layout keeps newlines, wraps text and draws exponents smaller without changing following text',()=>{const result=textLayout(text.runs,500,28,(_c,size)=>size/2);assert.equal(result.lines,3);assert.equal(result.glyphs[1].sup,true);assert.equal(result.glyphs[1].size,28*.65);assert.equal(result.glyphs.find(g=>g.char==='≥').sup,false);assert.equal(result.glyphs.find(g=>g.char==='≤').line,1);assert.ok(textLayout([{text:'abcdefgh',sup:false}],30,20,()=>10).lines>=3);});
+const txt=text=>({nodeType:3,textContent:text});
+const el=(name,children=[])=>({nodeType:1,nodeName:name,childNodes:children});
+test('editor parser preserves exponent spans and repeated Enter lines as text data',()=>{const first=el('DIV',[txt('x'),el('SUP',[txt('2')]),txt(' = 4')]),second=el('DIV',[txt('y ≤ 8')]);first.nextSibling=second;const runs=readTextRuns(el('ROOT',[first,second]));assert.deepEqual(runs,[{text:'x',sup:false},{text:'2',sup:true},{text:' = 4\ny ≤ 8',sup:false}]);assert.equal(readTextRuns(el('ROOT',[txt('a'),el('BR'),el('BR'),txt('b')])).map(r=>r.text).join(''),'a\n\nb');});

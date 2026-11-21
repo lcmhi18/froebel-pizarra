@@ -138,7 +138,7 @@ it('interval lessons share graphs, professor notes and strokes; student writes a
  const operation=(client:Client,value:unknown)=>({...client.operation({kind:'field',field:'lesson',value}),boardId:'intervalos'});
  const initial=operation(teacher,lesson);teacher.send({type:'ops',ops:[initial]});expect((await student.next('ops',m=>m.ops[0].opId===initial.opId)).ops[0].value).toEqual(lesson);
  const image='data:image/png;base64,'+btoa('\x89PNG\r\n\x1a\n'+'x'.repeat(100000));
- const imageLesson={...lesson,graphInk:[...lesson.graphInk,{t:'image',src:image,x1:.1,y1:.2,x2:.6,y2:.8}]};
+ const imageLesson={...lesson,graphInk:[...lesson.graphInk,{t:'image',src:image,x1:.1,y1:.2,x2:.6,y2:.8},{t:'text',runs:[{text:'x',sup:false},{text:'2',sup:true},{text:' ≥ 4\nx ≤ 8',sup:false}],fontSize:28,c:'#082783',x1:.1,y1:.1,x2:.9,y2:.9}]};
  const pasted=operation(teacher,imageLesson) as Op;for(const frame of operationFrames(pasted))teacher.send(frame);expect((await student.next('ops',m=>m.ops[0].opId===pasted.opId)).ops[0].value).toEqual(imageLesson);
  const pupil=operation(student,{...lesson,shown:5});student.send({type:'ops',ops:[pupil]});expect((await student.next('error')).code).toBe('FORBIDDEN');
  for(const value of [{...lesson,shown:99},{...lesson,topic:8},{...lesson,graph:{rows:[],operation:'u'}},{...lesson,strokes:[{c:'url(x)',w:5,a:1,p:[[0,0]]}]}]){const bad=operation(teacher,value);teacher.send({type:'ops',ops:[bad]});expect((await teacher.next('error')).code).toBe('BAD_MESSAGE');}
