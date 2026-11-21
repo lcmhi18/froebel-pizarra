@@ -139,7 +139,7 @@ function showLevel(level) {
 document.querySelectorAll('[data-level]').forEach(button => button.addEventListener('click', () => showLevel(button.dataset.level)));
 document.querySelectorAll('[data-subject]').forEach(button => button.addEventListener('click', () => {
   if (!authenticated) return;
-  if (button.dataset.subject === 'aritmetica' && currentLevel === 'primaria') { location.assign('/boards/aritmetica/'); return; }
+  if (button.dataset.subject === 'aritmetica' && currentLevel === 'primaria') { location.assign('/aritmetica/'); return; }
   if (button.dataset.subject === 'razonamiento' && currentLevel === 'primaria') { location.assign('/boards/razonamiento/'); return; }
   if (button.dataset.subject === 'algebra' && currentLevel === 'primaria') { location.assign('/algebra/'); return; }
   if (button.dataset.subject === 'geometria') { location.assign(geometryDestination(currentLevel)); return; }

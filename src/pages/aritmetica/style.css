@@ -1,0 +1,1 @@
+.boards{grid-template-columns:repeat(2,minmax(0,1fr))}.fractions .preview{background:#fff4c9;color:#29254e;gap:24px}.fractions .preview img{height:155px;width:155px;object-fit:contain}.fractions .preview b{font-size:35px;line-height:.8}@media(max-width:650px){.boards{grid-template-columns:1fr}}

@@ -13,7 +13,7 @@
     "worker:deploy": "node scripts/deploy-worker.mjs",
     "test:live": "node scripts/test-live.mjs",
     "test:engine": "node scripts/test-engine.mjs",
-    "build:site": "vite build && node scripts/prepare-static.mjs",
+    "build:site": "vite build && node scripts/prepare-static.mjs && node scripts/export-fractions.mjs",
     "build:app": "node scripts/build-app.mjs",
     "test:scaffold": "node --test tests/scaffold.test.mjs",
     "test:e1": "node scripts/test-e1.mjs",
@@ -36,7 +36,8 @@
     "build:konva": "node scripts/build-konva.mjs",
     "test:combined": "node --test tests/combined/*.test.mjs",
     "test:algebra": "node --test tests/algebra/*.test.mjs",
-    "test:intervalos": "node --test tests/intervalos/*.test.mjs"
+    "test:intervalos": "node --test tests/intervalos/*.test.mjs",
+    "test:fracciones": "node --test tests/fracciones/*.test.mjs"
   },
   "dependencies": {
     "@fontsource/fredoka": "5.3.0",

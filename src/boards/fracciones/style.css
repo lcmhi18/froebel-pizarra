@@ -1,0 +1,269 @@
+[hidden]{display:none!important}
+
+:root{font-family:Nunito,'Trebuchet MS',system-ui,sans-serif;color:#28234f;background:#fff8e7;--bg:#fff8e7;--card:#fff;--ink:#28234f;--muted:#6b6a8a;--border:#e7def4;--empty:#eceaf6;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;padding-bottom:calc(132px + env(safe-area-inset-bottom))}
+button,input,select{font:inherit;color:inherit}
+button,select,.image-button{cursor:pointer}
+button{font-weight:800;min-height:44px;border:2px solid #c9bcec;border-radius:16px;background:linear-gradient(#fff,#f2edff);padding:9px 13px;box-shadow:0 4px 0 #c7b9e2}
+button:active{transform:translateY(2px);box-shadow:0 2px 0 #c7b9e2}
+button:disabled{opacity:.45;cursor:default}
+input,select{min-height:44px;border:2px solid #e5b55c;border-radius:15px;background:var(--card);padding:7px 10px;font-size:22px;font-weight:800;max-width:100%}
+input[type=number]{width:88px;text-align:center}
+input[type=range]{padding:0;min-height:24px;accent-color:#4d96ff}
+input[type=color]{width:45px;height:42px;padding:3px}
+button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid #4d96ff;outline-offset:3px}
+button img,.image-button img{display:block;width:32px;height:32px;margin:auto}
+button span[data-icon]{display:inline-flex;align-items:center}
+.academy{display:flex;align-items:center;gap:15px;justify-content:space-between;padding:12px 22px;color:#3d3672;font-weight:800;background:#fffdf7;border-bottom:1px solid #f1dfa8}
+.academy a{color:inherit;text-decoration:none;padding:8px;border-radius:12px}
+.academy a:hover{background:#fff0c2}
+.academy #live-slot{display:flex;gap:8px;align-items:center}
+main{max-width:1536px;margin:auto;padding:18px 22px 34px}
+h1{font-family:Fredoka,Nunito,sans-serif;font-size:clamp(30px,4.5vw,65px);font-weight:600;text-align:center;line-height:1.08;margin:2px auto 20px;padding:10px 30px;max-width:970px;background:linear-gradient(#fff2a3,#ffcf46);border:3px solid #db9e31;border-radius:60px;box-shadow:0 5px 0 #d9ae77;text-shadow:2px 2px white;display:flex;align-items:center;justify-content:center;gap:14px}
+h1 [data-icon] img{width:65px;height:65px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:18px}
+.tabs button{display:flex;align-items:center;justify-content:center;gap:10px;min-height:75px;font-size:clamp(19px,2.4vw,34px);border-width:3px;border-radius:30px;padding:10px}
+.tabs img{width:42px;height:42px}
+.tabs [data-tab=parts]{background:linear-gradient(#ffe76c,#ffd528);border-color:#edaa2b}
+.tabs [data-tab=equiv]{background:linear-gradient(#bbebff,#5bb3fc);border-color:#2c9dff}
+.tabs [data-tab=operations]{background:linear-gradient(#b3ffde,#34d6a4);border-color:#22b993}
+.tabs [data-tab=decimal]{background:linear-gradient(#e6bbff,#b784ee);border-color:#a36be5}
+.tabs button[aria-selected=true]{outline:3px solid #fff;outline-offset:-7px;box-shadow:0 6px 0 #bd842b}
+.lesson-context{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:10px 0;font-size:14px}
+.lesson-context select{font-size:15px;min-height:36px;padding:3px 8px}
+.lesson-context #mode-hint{flex:1;color:var(--muted)}
+.lesson-context button{font-size:13px;padding:6px 10px;min-height:36px}
+.controls{background:linear-gradient(110deg,#fff0af,#fff7d9);border:3px solid #ffc75f;border-radius:23px;padding:15px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:14px;font-size:21px;font-weight:800}
+.controls label{display:flex;align-items:center;gap:10px}
+.controls select{font-size:23px}
+.new-exercise{margin-left:auto;color:white;background:linear-gradient(#a87eff,#6d3bdc);border-color:#7747cd;font-size:25px;padding:11px 25px;text-shadow:1px 2px #563488;display:flex;align-items:center;gap:8px}
+.new-exercise img{filter:brightness(0) invert(1)}
+.board{position:relative;background:var(--card);border:3px solid #ffc65c;border-radius:26px;padding:20px;min-height:400px;box-shadow:0 6px 0 #efdfc7;isolation:isolate}
+#output{position:relative;z-index:0;min-height:350px}
+#annotation-canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;user-select:none;z-index:5}
+.parts-hint{text-align:center;font-size:21px;font-weight:800;margin:0 0 12px}
+.parts-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px}
+.parts-main{display:grid;grid-template-columns:minmax(0,1fr) 170px 180px;gap:16px;align-items:center;border:2px solid #eeebf5;border-radius:20px;padding:12px;min-height:365px}
+.figure-space{min-height:330px;position:relative;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;overflow:visible}
+.figure-wrap{position:relative;width:100%;max-width:450px;touch-action:none}
+.figure-wrap svg{width:100%;height:auto;display:block}
+.figure-wrap button{position:absolute;z-index:2;width:32px;height:32px;min-height:32px;padding:2px;border-radius:10px;background:#ffd529;box-shadow:0 2px #c99c1f;opacity:0;transition:opacity .12s}
+.figure-wrap:hover button,.figure-wrap:focus-within button,.move-figures .figure-wrap button{opacity:1}
+.figure-wrap .figure-move{left:0;top:0}
+.figure-wrap .figure-resize{right:0;bottom:0}
+.figure-wrap button img{width:22px;height:22px}
+.fraction-piece{cursor:pointer;transition:opacity .1s}
+.fraction-piece:hover{filter:brightness(1.08)}
+.big-fraction{padding:20px 12px;border:3px solid #98bfff;background:linear-gradient(#f8fcff,#e3f1ff);border-radius:25px;text-align:center}
+.fraction{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;vertical-align:middle;font-size:1em;line-height:1.04;min-width:1.2em;margin:0 4px;font-weight:800}
+.fraction>.numerator{padding:0 .15em .1em}
+.fraction>.denominator{padding:.1em .15em 0;border-top:.085em solid currentColor;width:100%;text-align:center}
+.big-fraction .fraction{font-size:clamp(66px,7vw,120px)}
+.part-actions{display:flex;flex-direction:column;gap:18px}
+.part-actions button{font-size:21px;border-width:3px;border-radius:22px;padding:17px 8px}
+.part-actions .all{color:#fff;background:linear-gradient(#4ce0a4,#09b97e);border-color:#159f72;box-shadow:0 5px #67a88a}
+.part-actions .none{color:#fff;background:linear-gradient(#ff96c8,#f3448c);border-color:#db3e82;box-shadow:0 5px #bd7398}
+.part-actions .center{color:#fff;background:linear-gradient(#5ebfff,#0085f2);border-color:#157dd9;box-shadow:0 5px #8d8db9}
+.customize{border:3px solid #a18bdd;border-radius:25px;background:linear-gradient(#fcfaff,#f0ebff);padding:14px;display:flex;flex-direction:column;gap:14px}
+.customize h3{font-size:21px;margin:0 0 8px}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.swatches button{padding:0;width:35px;height:35px;min-height:35px;border-radius:50%;background:var(--swatch);border:2px solid white;box-shadow:0 2px 2px #938eb5}
+.swatches .chosen{outline:3px solid #ed3f65;outline-offset:2px}
+.swatches .original{width:auto;border-radius:10px;padding:2px 7px;background:white;font-size:11px}
+.customize label{font-weight:800;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.customize input[type=range]{width:160px;flex:1}
+.customize output{font-weight:800}
+.customize .move-toggle{background:linear-gradient(#ffed7a,#ffd529);border-color:#e3b22c;margin-top:auto}
+.comparison{display:flex;gap:30px;align-items:center;justify-content:center;padding:30px 10px}
+.comparison .fraction{font-size:75px}
+.symbol-target{height:100px;width:100px;border:3px dashed #b6a4d5;background:#f7f1ff;border-radius:22px;font-size:60px;display:grid;place-items:center;cursor:pointer}
+.symbol-chips{display:flex;justify-content:center;gap:15px;flex-wrap:wrap}
+.symbol-chips button{font-size:35px;width:74px;touch-action:none}
+.feedback{padding:15px;border-radius:17px;margin:20px auto;text-align:center;font-size:20px;max-width:900px;background:#edfff4;border:2px solid #6ed8ac}
+.feedback.wrong{background:#fff0ee;border-color:#ffac9a}
+.math-expression{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;font-size:30px;margin:16px auto}
+.math-expression sup{font-size:.58em;align-self:flex-start}
+.operand-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;width:100%}
+.operand-card{padding:10px;border:2px solid #d9cbed;border-radius:17px;background:var(--card);display:flex;flex-direction:column;gap:7px;max-width:265px}
+.operand-card select{font-size:15px}
+.operand-card label{font-size:13px}
+.operand-card input{font-size:18px;width:68px}
+.operand-card .operand-values{display:flex;gap:6px;align-items:center}
+.operand-card input[type=text]{width:185px}
+.operand-card .power-input{width:58px}
+.operator-select{width:60px;padding:6px;font-size:23px}
+.lesson-step{border:2px solid #bce1d2;border-radius:18px;padding:14px 18px;margin:12px 0;background:#fbfffd}
+.step-heading{display:flex;align-items:center;gap:10px;font-size:20px}
+.step-heading span{background:#2dc98a;color:white;border-radius:50%;width:34px;height:34px;display:grid;place-items:center;flex:none}
+.lesson-step.answer{background:#fff3a6;border-color:#f7c542}
+.step-controls{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:20px 0}
+.step-controls button{font-size:19px}
+.step-controls .next{background:#c5f4df;border-color:#39cfa0}
+.solution-hidden .concealable{filter:blur(8px);cursor:pointer;user-select:none}
+.solution-hidden .concealable.revealed{filter:none}
+.decimal-value .repeat{text-decoration:overline;text-decoration-thickness:2px}
+.mixed-number{display:inline-flex;align-items:center;font-size:1em}
+.symbol-ghost{position:fixed;z-index:1000;pointer-events:none;font-size:46px;padding:5px 20px;border-radius:15px;background:#fff4a8;border:3px solid #ffc233;transform:translate(-50%,-50%)}
+#error,#drawing-error,#room-status{padding:13px;border:2px solid #ffa48c;border-radius:16px;background:#fff1e9;color:#982f17;font-weight:800}
+.toolbar{position:fixed;z-index:50;bottom:calc(8px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:calc(100% - 28px);max-width:1508px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:10px 12px;border:3px solid #e4b24f;border-radius:27px;background:rgba(255,253,247,.98);box-shadow:0 5px 0 #e0c599}
+.toolbar button,.toolbar .image-button{font-size:13px;min-width:62px;min-height:64px;padding:5px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:2px solid #c3c0ee;border-radius:18px;box-shadow:0 4px #c7c3df;background:linear-gradient(#fff,#ecebff);font-weight:800;text-decoration:none}
+.toolbar button.active{background:linear-gradient(#fff48a,#ffd63e);border-color:#e5b22e;box-shadow:0 4px #cda756}
+.toolbar button[data-size]{font-size:29px;min-width:52px}
+.toolbar [data-scale]{font-size:11px;width:34px}
+.drawing-colors{display:flex;align-items:center;gap:6px;padding:0 10px;border-left:2px solid #8c83ad;border-right:2px solid #8c83ad}
+.toolbar .drawing-colors button{min-width:32px;width:32px;min-height:32px;height:32px;padding:0;border:2px solid white;border-radius:50%;background:var(--color);box-shadow:0 1px 3px #8e80a9}
+.drawing-colors .chosen{outline:3px solid #5951ae}
+.fraction-symbol{font-size:19px;line-height:.65;text-align:center}
+.fraction-symbol i{display:block;width:19px;border-top:2px solid;margin:5px 0}
+.help{font-size:14px;color:var(--muted);text-align:center}
+.text-options,.fraction-options{position:fixed;z-index:60;bottom:145px;left:50%;transform:translateX(-50%);width:min(850px,94vw);border:2px solid #bba8e2;border-radius:19px;padding:10px;background:var(--card);box-shadow:0 5px 20px #52437733}
+.text-options>div:first-child,.fraction-options{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.text-options label,.fraction-options label{display:flex;align-items:center;gap:6px;font-weight:800;font-size:13px}
+.text-options input[type=number]{width:65px;font-size:17px}
+.text-options button{font-size:13px;padding:6px 9px;min-height:36px}
+.text-options button.act{background:#ffdf54}
+.text-options [hidden],.fraction-options[hidden],.text-options[hidden]{display:none!important}
+#board>.graph-inline-text{position:absolute;z-index:8;padding:0;min-height:1.4em;outline:none;white-space:pre-wrap;overflow-wrap:anywhere;background:transparent;border:1px dashed #4d96ff;font:600 28px/1.4 Nunito,sans-serif;user-select:text;cursor:text}
+#board>.graph-inline-text[hidden]{display:none}
+#board>.graph-inline-text sup{font-size:.65em;line-height:0}
+.drop-active{outline:4px dashed #4d96ff}
+.revealed{filter:none}
+.room-readonly #controls input,.room-readonly #controls select{opacity:.7}
+
+:root[data-theme=dark]{--bg:#1a1933;--card:#26254a;--ink:#f4f2ff;--muted:#bcb9d6;--border:#5a5184;--empty:#403a62;color-scheme:dark;background:var(--bg);color:var(--ink)}
+:root[data-theme=dark] body{background:var(--bg);color:var(--ink)}
+:root[data-theme=dark] .academy,:root[data-theme=dark] .toolbar{background:#26254a;color:#f4f2ff}
+:root[data-theme=dark] input,:root[data-theme=dark] select{background:#26254a;color:#f4f2ff}
+:root[data-theme=dark] .controls{background:#383051}
+:root[data-theme=dark] button{color:#28234f}
+:root[data-theme=dark] .customize,:root[data-theme=dark] .big-fraction,:root[data-theme=dark] .feedback,:root[data-theme=dark] .symbol-target{background:#322c51;color:#f4f2ff}
+:root[data-theme=dark] .lesson-step{background:#2c3742}
+:root[data-theme=dark] .answer{background:#53461c}
+:root[data-theme=dark] h1{color:#28234f}
+
+@media(max-width:1100px){.parts-layout{grid-template-columns:minmax(0,1fr) 255px}
+.parts-main{grid-template-columns:minmax(0,1fr) 120px}
+.part-actions{grid-column:1/-1;flex-direction:row;justify-content:center}
+.part-actions button{font-size:17px;padding:9px 12px}
+.toolbar{gap:5px}
+.toolbar button,.toolbar .image-button{min-width:48px;min-height:54px;font-size:11px}
+.toolbar button img,.toolbar .image-button img{width:25px;height:25px}
+.big-fraction .fraction{font-size:78px}
+}
+
+@media(max-width:750px){main{padding:15px 10px 30px}
+body{padding-bottom:205px}
+.academy{padding:8px 10px;flex-wrap:wrap;font-size:12px}
+.academy #download{font-size:11px}
+h1{font-size:30px;padding:9px 12px;gap:7px;border-radius:30px}
+h1 [data-icon] img{width:40px;height:40px}
+.tabs{grid-template-columns:repeat(2,1fr);gap:9px}
+.tabs button{min-height:56px;font-size:20px;border-radius:20px}
+.tabs img{width:30px;height:30px}
+.controls{padding:11px;gap:10px;font-size:16px}
+.controls label{gap:7px}
+.controls select{font-size:17px;max-width:220px}
+.controls input{font-size:21px;width:70px}
+.new-exercise{font-size:18px;padding:8px 16px}
+.parts-layout{grid-template-columns:1fr}
+.parts-main{grid-template-columns:minmax(0,1fr) 100px;gap:5px;padding:4px;min-height:270px}
+.figure-space{min-height:240px}
+.big-fraction{padding:12px 4px;border-radius:18px}
+.big-fraction .fraction{font-size:64px}
+.part-actions{gap:8px}
+.part-actions button{font-size:13px;min-height:44px;padding:7px}
+.customize{display:grid;grid-template-columns:1fr 1fr;padding:11px;gap:12px}
+.customize h3{font-size:17px}
+.customize .swatches{gap:7px}
+.customize .swatches button{width:28px;height:28px;min-height:28px}
+.customize label{font-size:13px}
+.customize .move-toggle{font-size:13px}
+.board{padding:10px;min-height:350px}
+.parts-hint{font-size:16px}
+.comparison{gap:15px;padding:20px 0}
+.comparison .fraction{font-size:55px}
+.symbol-target{width:75px;height:75px;font-size:44px}
+.math-expression{font-size:25px;gap:7px}
+.lesson-step{padding:10px}
+.step-heading{font-size:16px}
+.operand-card{max-width:100%;flex:1;min-width:160px}
+.toolbar{width:calc(100% - 12px);padding:7px;gap:5px;border-radius:20px}
+.toolbar button,.toolbar .image-button{min-width:44px;min-height:47px;font-size:10px;border-radius:12px;padding:3px}
+.toolbar button img,.toolbar .image-button img{width:22px;height:22px}
+.toolbar button[data-size]{font-size:23px;min-width:40px}
+.toolbar [data-scale]{width:24px}
+.drawing-colors{padding:0 6px;gap:5px}
+.toolbar .drawing-colors button{min-width:25px;width:25px;min-height:25px;height:25px}
+.text-options,.fraction-options{bottom:190px}
+.figure-wrap button{opacity:1}
+}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}
+}
+
+
+/* Keep the complete teaching surface visible on laptop screens. */
+@media(min-width:751px) and (max-height:850px){.academy{padding:5px 18px;font-size:13px}
+.academy button{min-height:34px;padding:4px 12px}
+main{padding:9px 18px 24px}
+h1{font-size:40px;padding:5px 24px;margin-bottom:12px;max-width:800px}
+h1 [data-icon] img{width:43px;height:43px}
+.tabs{margin-bottom:9px}
+.tabs button{min-height:53px;font-size:26px;padding:5px}
+.tabs img{width:32px;height:32px}
+.lesson-context{margin:7px 0;gap:10px}
+.controls{padding:8px 14px;margin-bottom:10px;font-size:18px;gap:12px}
+.controls input,.controls select{min-height:39px;font-size:20px}
+.new-exercise{font-size:21px;padding:6px 20px}
+.board{padding:12px;min-height:320px}
+.parts-hint{font-size:18px;margin-bottom:7px}
+.parts-main{grid-template-columns:minmax(0,1fr) 125px 145px;gap:8px;padding:6px;min-height:285px}
+.figure-space{min-height:270px}
+.parts-layout{grid-template-columns:minmax(0,1fr) 270px;gap:12px}
+.customize{padding:9px;gap:7px}
+.customize h3{font-size:17px;margin-bottom:5px}
+.swatches{gap:6px}
+.swatches button{width:28px;height:28px;min-height:28px}
+.customize label{font-size:14px}
+.part-actions{grid-column:auto;flex-direction:column;gap:12px}
+.part-actions button{font-size:17px;padding:10px 6px}
+.big-fraction{padding:12px 8px}
+.big-fraction .fraction{font-size:80px}
+.toolbar{padding:7px;bottom:5px}
+.toolbar button,.toolbar .image-button{min-height:58px}
+.help{margin:12px 0}
+.operand-card{padding:7px}
+.operand-controls{gap:7px}
+}
+
+
+@media(min-width:1101px) and (max-height:850px){.parts-layout{grid-template-columns:minmax(0,1fr) 300px}
+.customize .swatches{gap:3px}
+.customize .swatches button{width:24px;height:24px;min-height:24px}
+.customize .swatches .original{width:45px;font-size:10px;padding:1px}
+.figure-space{min-height:235px}
+.figure-wrap{max-width:330px}
+.parts-main{min-height:245px}
+.parts-hint{margin-bottom:5px}
+.customize .move-toggle{min-height:36px;font-size:13px}
+.customize h3{margin-bottom:3px}
+.board{padding:10px}
+.controls{padding:6px 14px}
+.lesson-context{margin:5px 0}
+h1{font-size:36px;padding:4px 24px;margin-bottom:9px}
+.tabs button{min-height:49px;font-size:24px}
+.tabs{margin-bottom:5px}
+}
+
+
+@media(min-width:751px) and (max-height:850px){#output{min-height:0}
+}
+
+@media(max-width:750px){.tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tabs button{min-width:0;font-size:18px;gap:6px}
+.tabs img{width:26px;height:26px}
+.customize{grid-template-columns:repeat(2,minmax(0,1fr))}
+.customize input[type=range]{min-width:0;width:100%}
+}
+

@@ -144,3 +144,13 @@ it('interval lessons share graphs, professor notes and strokes; student writes a
  for(const value of [{...lesson,shown:99},{...lesson,topic:8},{...lesson,graph:{rows:[],operation:'u'}},{...lesson,strokes:[{c:'url(x)',w:5,a:1,p:[[0,0]]}]}]){const bad=operation(teacher,value);teacher.send({type:'ops',ops:[bad]});expect((await teacher.next('error')).code).toBe('BAD_MESSAGE');}
  expect((await teacher.snapshot()).state.fields.lesson).toEqual(imageLesson);
 });
+import {initialLesson as fractionLesson} from '../../src/boards/fracciones/model.js';
+it('fractions lessons and annotation images reach pupils; only the teacher can edit them',async()=>{
+ const {teacher,student}=await fixture();teacher.send({type:'set_board',boardId:'fracciones'});await student.next('snapshot_end');await teacher.next('snapshot_end');teacher.frames=[];student.frames=[];
+ const lesson=fractionLesson(),op=(client:Client,field:string,value:unknown)=>({...client.operation({kind:'field',field,value}),boardId:'fracciones'});
+ const shared=op(teacher,'lesson',lesson);teacher.send({type:'ops',ops:[shared]});expect((await student.next('ops',f=>f.ops[0].opId===shared.opId)).ops[0].value).toEqual(lesson);
+ const drawing=[{t:'stroke',p:[[.1,.2],[.4,.6]],c:'#123abc',w:4},{t:'text',runs:[{text:'x',sup:false},{text:'2',sup:true},{text:' ≥ 2\nOtra línea',sup:false}],fontSize:28,c:'#123abc',x1:.1,y1:.1,x2:.8,y2:.7},{t:'image',src:'data:image/png;base64,'+btoa('\x89PNG\r\n\x1a\n'+'x'.repeat(100000)),x1:.1,y1:.2,x2:.6,y2:.8}];
+ const pasted=op(teacher,'drawing',drawing) as Op;for(const frame of operationFrames(pasted))teacher.send(frame);expect((await student.next('ops',f=>f.ops[0].opId===pasted.opId)).ops[0].value).toEqual(drawing);
+ const before=await teacher.snapshot();for(const field of ['lesson','drawing']){student.send({type:'ops',ops:[op(student,field,field==='lesson'?lesson:[])]});expect((await student.next('error')).code).toBe('FORBIDDEN');}
+ for(const [field,value]of [['lesson',{...lesson,parts:{...lesson.parts,d:0}}],['lesson',{...lesson,parts:{...lesson.parts,n:4}}],['drawing',[{...drawing[0],w:400}]],['unknown',{}]] as const){teacher.send({type:'ops',ops:[op(teacher,field,value)]});expect((await teacher.next('error')).code).toBe('BAD_MESSAGE');}expect(await teacher.snapshot()).toEqual(before);
+});
