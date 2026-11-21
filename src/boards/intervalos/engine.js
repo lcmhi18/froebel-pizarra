@@ -112,7 +112,7 @@ function tIv(s){const P=ivParse(s);
  const all=P.order.map(k=>P.defs[k]).concat(P.lits);
  if(all.length!==1)throw'Escribe un intervalo como [−5; 3⟩ o una desigualdad como −5 ≤ x < 3.';
  const i=all[0],nm=i.name&&i.name!=='x'?i.name.toUpperCase():(i.src==='ineq'?i.v:'x'),
-  R=ivR(i),I=ivNot(i),Q=ineqTxt(i,nm),fin=isFinite(i.a)&&isFinite(i.b),E=new Set([i.a,i.b].filter(isFinite)),
+  R=ivR(i),I=ivNot(i),Q=ineqTxt(i,i.v||'x'),fin=isFinite(i.a)&&isFinite(i.b),E=new Set([i.a,i.b].filter(isFinite)),
   cnt=R.length?i.hi-i.lo+1:0,tipo=i.lc&&i.rc?'cerrado':!i.lc&&!i.rc?'abierto':'semiabierto',
   named=i.name&&i.name!=='x'?nm+' = ':'';
  const izq=isFinite(i.a)?(i.lc?`el ${M(i.a)} SÍ entra`:`el ${M(i.a)} NO entra (empezamos en ${M(i.lo)})`):'sigue sin parar hacia la izquierda (−∞)';

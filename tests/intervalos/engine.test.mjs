@@ -29,3 +29,4 @@ test('room lesson validates content, bounds and strokes',()=>{
  assert.equal(validLesson(lesson),true);
  for(const mutate of [x=>x.topic=8,x=>x.shown=99,x=>x.work='x'.repeat(8001),x=>x.graph.rows[0].a=100,x=>x.graph.rows[0].b=1.5,x=>x.strokes[0].c='url(x)',x=>x.strokes[0].p=[[Infinity,0]],x=>x.graph.operation='unknown',x=>x.extra=true]){const x=structuredClone(lesson);mutate(x);assert.equal(validLesson(x),false);}
 });
+test('a named set uses x in its inequality, not the set name as a scalar',()=>{const rows=solve(0,'A = ⟨−3; 6]');assert.ok(rows[1][0].includes('−3 < x ≤ 6'));assert.ok(rows.at(-1)[0].includes('n(A)'));});
