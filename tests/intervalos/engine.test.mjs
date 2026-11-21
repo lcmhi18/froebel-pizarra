@@ -30,3 +30,21 @@ test('room lesson validates content, bounds and strokes',()=>{
  for(const mutate of [x=>x.topic=8,x=>x.shown=99,x=>x.work='x'.repeat(8001),x=>x.graph.rows[0].a=100,x=>x.graph.rows[0].b=1.5,x=>x.strokes[0].c='url(x)',x=>x.strokes[0].p=[[Infinity,0]],x=>x.graph.operation='unknown',x=>x.extra=true]){const x=structuredClone(lesson);mutate(x);assert.equal(validLesson(x),false);}
 });
 test('a named set uses x in its inequality, not the set name as a scalar',()=>{const rows=solve(0,'A = ⟨−3; 6]');assert.ok(rows[1][0].includes('−3 < x ≤ 6'));assert.ok(rows.at(-1)[0].includes('n(A)'));});
+
+import {resolveExercise} from '../../src/boards/intervalos/engine.js';
+test('automatically chooses the actual operation from every initial tab',()=>{
+ for(let initial=0;initial<3;initial++)for(let topic=0;topic<TOP.length;topic++)for(const example of TOP[topic].ex){const got=resolveExercise(example,initial);assert.equal(got.topic,topic);assert.deepEqual(got.steps,solve(topic,example));}
+});
+test('undefined operands report their actual cause instead of an unrelated single interval warning',()=>{
+ assert.throws(()=>resolveExercise('A ∪ B',0),e=>String(e).includes('Defínelo'));
+ assert.throws(()=>resolveExercise("A = [1;4] , A ∪ C",0),e=>String(e).includes('C')&&String(e).includes('Defínelo'));
+});
+test('bare operations use named active editor graphs; explicit definitions take precedence',()=>{
+ const graph={rows:[{a:1,b:4,L:'c',R:'c',on:true},{a:3,b:8,L:'c',R:'c',on:true}]};
+ assert.ok(resolveExercise('A ∩ B',0,graph).steps.at(-1)[0].includes('{3; 4}'));
+ assert.ok(resolveExercise('A = [0;3] , A ∩ B',0,graph).steps.at(-1)[0].includes('{3}'));
+ assert.throws(()=>resolveExercise('A ∪ C',0,graph),e=>String(e).includes('C'));
+});
+test('the screenshot expression explains reversed bounds instead of changing topics',()=>{
+ assert.throws(()=>resolveExercise('[−5;3⟩∪[2,1>',0),e=>String(e).includes('empieza en 2 y termina en 1'));
+});

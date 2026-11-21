@@ -6,7 +6,7 @@ const M=n=>n===INF?'+∞':n===-INF?'−∞':String(n).replace('-','−');
 const iNum=t=>{t=t.replace(/^\+/,'');if(/^-?(∞|inf)$/.test(t))return t[0]==='-'?-INF:INF;return/^-?\d+$/.test(t)?+t:null};
 function mkIv(a,b,lc,rc,v,src){
  if(a===INF||b===-INF||Number.isNaN(a)||Number.isNaN(b))throw 'El infinito negativo va a la izquierda y el positivo a la derecha.';
- if(a>b)throw'El extremo izquierdo debe ser menor o igual que el derecho.';
+ if(a>b)throw 'El intervalo empieza en '+M(a)+' y termina en '+M(b)+'. El extremo izquierdo no puede ser mayor que el derecho. Revisa esos dos números.';
  lc=lc&&isFinite(a);rc=rc&&isFinite(b);
  return{a,b,lc,rc,v:v||'x',src,lo:isFinite(a)?(lc?a:a+1):-INF,hi:isFinite(b)?(rc?b:b-1):INF}}
 function parseIv(t){
@@ -180,3 +180,18 @@ function solve(tp,raw){
 }
 
 export {sup,toSup,norm,pretty,fr,INF,mkIv,parseIv,parseIneq,ivR,rn,rU,rI,rD,rC,ext,ivTxt,nlB,TOP,solve};
+
+/** Pick the operation from the exercise itself; never report an unrelated tab's error. */
+export function resolveExercise(raw,preferred=0,graph){
+ if(typeof raw!=='string'||raw.length>2000)return {topic:preferred,steps:solve(preferred,raw)};
+ let expression=raw;
+ let parsed=ivParse(norm(expression));
+ if(parsed.expr&&graph?.rows){
+  const missing=[...new Set(parsed.expr.match(/[a-z]/g)||[])].filter(name=>!parsed.defs[name]);
+  const definitions=missing.flatMap(name=>{const row=graph.rows[name.charCodeAt(0)-97];if(!row||!row.on)return [];return name+'='+ivNot(mkIv(row.L==='i'?-INF:row.R==='i'?row.a:Math.min(row.a,row.b),row.R==='i'?INF:row.L==='i'?row.b:Math.max(row.a,row.b),row.L==='c',row.R==='c'));});
+  if(definitions.length){expression=definitions.join(',')+','+raw;parsed=ivParse(norm(expression));}
+ }
+
+ const topic=parsed.expr?(/[∪∩]/.test(parsed.expr)?1:2):0;
+ return {topic,expression,steps:solve(topic,expression)};
+}

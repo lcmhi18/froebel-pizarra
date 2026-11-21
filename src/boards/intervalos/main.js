@@ -8,10 +8,11 @@ import './reference.css';
 import '../algebra-completa/style.css';
 import './style.css';
 import DOMPurify from 'dompurify';
-import {sup,toSup,norm,pretty,fr,INF,mkIv,ivR,rU,rI,rD,rC,ext,ivTxt,nlB,TOP,solve} from './engine.js';
+import {sup,toSup,norm,pretty,fr,INF,mkIv,ivR,rU,rI,rD,rC,ext,ivTxt,nlB,TOP,solve,resolveExercise} from './engine.js';
 const cleanHTML=value=>DOMPurify.sanitize(String(value),{USE_PROFILES:{html:true,svg:true,svgFilters:true},FORBID_TAGS:['style','iframe','object','embed','form']});
 const setHTML=(element,value)=>{element.innerHTML=cleanHTML(value);};
 let graphModelAPI, graphInkAPI, currentExercise;
+const validation=document.createElement('p');validation.id='exercise-error';validation.className='err';validation.hidden=true;validation.setAttribute('role','alert');document.getElementById('inp').closest('.row').after(validation);
 let S = [], shown = 1, tp = 0;
 function build() {
     const b = document.getElementById('board');
@@ -21,28 +22,11 @@ function build() {
             q.value = toSup(q.value);
         }
         const raw = document.getElementById('inp').value;
-        let R;
-        try {
-            R = solve(tp, raw);
-        }
-        catch (err) {
-            let ok = null;
-            for (let j = 0; j < TOP.length; j++) {
-                if (j === tp)
-                    continue;
-                try {
-                    R = solve(j, raw);
-                    ok = j;
-                    break;
-                }
-                catch (_) { }
-            }
-            if (ok === null)
-                throw err;
-            tp = ok;
-            tabs(ok);
-        }
-        currentExercise = raw;
+        const resolved=resolveExercise(raw,tp,graphModelAPI?.get());
+        const R=resolved.steps;
+        if(tp!==resolved.topic){tp=resolved.topic;tabs(tp);}
+        validation.hidden=true;
+        currentExercise = resolved.expression;
         S = R.map((x, i, a) => { const h = sup(x[0].replace(/-(?![^<]*>)/g, '−')); return { h: i === a.length - 1 && i > 0 ? `<span class="hl">${h}</span>` : h, s: toSup(x[1]).replace(/-/g, '−') }; });
         shown = 1;
         draw();
@@ -52,12 +36,8 @@ function build() {
         setHTML($('work'), '');
     }
     catch (e) {
-        S = [];
-        park();
-        setHTML(b, '<div class="err">' + (e.message || e) + '</div>');
-        seat();
-        say('🤔', 'Revisa lo que escribiste y prueba otra vez.');
-        count();
+        validation.textContent=String(e.message||e);
+        validation.hidden=false;
     }
 }
 const FX = [

@@ -10,4 +10,6 @@ Sala: el profesor comparte expresión, pasos, notas, gráficos (hasta ocho), pin
 
 Límites: ejercicios de 2000 caracteres, extremos del ejercicio entre −100000 y 100000; editor gráfico entre −99 y 99, enteros; notas de 8000 caracteres; 1200 puntos y 64 trazos por lienzo; estado compartido hasta 45000 caracteres. Si se excede el estado, aparece aviso en lugar de enviar datos inválidos.
 
-Verificación: `npm run test:intervalos` (30 pruebas, con operaciones contrastadas contra conjuntos enumerados); prueba WebSocket en `tests/e3/recta-permissions.test.ts`; compilación completa. Navegador local: tres pasos con SVG, lápiz continuo, notas multilínea conservadas, paneles y 390 px sin desbordamiento horizontal. La prueba de sala usa el Worker local; no equivale a una clase autenticada en producción.
+Verificación: `npm run test:intervalos` (34 pruebas, con operaciones contrastadas contra conjuntos enumerados); prueba WebSocket en `tests/e3/recta-permissions.test.ts`; compilación completa. Navegador local: tres pasos con SVG, lápiz continuo, notas multilínea conservadas, paneles y 390 px sin desbordamiento horizontal. La prueba de sala usa el Worker local; no equivale a una clase autenticada en producción.
+
+Resolución automática: detecta el tema desde la operación; A ∪ B / A ∩ B pueden usar los conjuntos activos del editor sin repetir los extremos. Las definiciones escritas explícitamente tienen prioridad. Los errores se indican junto al ejercicio y conservan los pasos y las notas del lienzo.
