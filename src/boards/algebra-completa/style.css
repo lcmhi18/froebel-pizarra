@@ -20,3 +20,14 @@ button:disabled{opacity:.45}.tabs{padding:9px;gap:8px;background:#f8fdff;border:
 .drag-ghost{background:#fff7cf;color:#082783;border-color:#f2ba00}.pf{background:#fff7cf;color:#082783;border-color:#f2ba00;white-space:normal;overflow-wrap:anywhere;max-width:calc(100% - 12px);border-radius:12px}.pf button{width:28px;height:28px;min-height:28px;color:#082783;background:white;border:1px solid #9ec5ff}.work .fr2 .n:focus,.work .fr2 .d:focus{background:#e2f3ff}
 @media(max-width:950px){.algebra-layout{grid-template-columns:260px minmax(0,1fr)}.board{font-size:28px}.tag{min-width:65px;font-size:16px}.ord summary{font-size:21px}}
 @media(max-width:700px){.academy-header{padding:10px;font-size:14px}main{padding:17px 9px 28px}.algebra-layout{display:flex;flex-direction:column;gap:14px}.ord{width:100%;max-height:260px}.algebra-workspace{width:100%}.rules{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.rule.cc{padding:7px}.rule.cc h3{font-size:13px;line-height:1.15;gap:5px}.rule.cc .sym{width:27px;height:27px;font-size:17px}.rule.cc .fm{font-size:21px;padding:7px 4px}.rule.cc .grab{font-size:12px;padding:4px}.ord>p{font-size:13px}.chips button.big{font-size:13px}.board{font-size:28px;padding:14px 9px;min-height:340px}.line{gap:8px}.tag{min-width:61px;font-size:15px;padding:3px 5px}.say{font-size:16px;padding:11px}.face{width:75px}.face img{height:100px}.hint{font-size:12px}.count{margin-left:0}.row input{font-size:23px}.row button{padding:9px 14px}}
+/* Closing the formula library gives its column back to the board. */
+.ord summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;list-style:none}
+.ord summary::-webkit-details-marker{display:none}
+.formula-close{font:800 24px Nunito,sans-serif}.formula-open{display:none}
+.algebra-layout:has(>.ord:not([open])){grid-template-columns:54px minmax(0,1fr)}
+.ord:not([open]){padding:0;overflow:visible;border:0;background:transparent}
+.ord:not([open]) summary{top:0;justify-content:center;padding:10px;min-height:50px;border:2px solid #a3d5ff;box-shadow:0 3px 0 #addaff}
+.ord:not([open]) .formula-title,.ord:not([open]) .formula-close{display:none}
+.ord:not([open]) .formula-open{display:inline}
+.ord summary:focus-visible{outline:3px solid #006bff;outline-offset:3px}
+@media(max-width:700px){.ord:not([open]){width:54px}}

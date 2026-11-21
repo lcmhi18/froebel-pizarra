@@ -470,3 +470,12 @@ document.querySelectorAll('.rule').forEach(card => card.addEventListener('pointe
     window.addEventListener('pointercancel', up);
 }));
 setTopic(0);
+
+const formulaPanel = document.querySelector('.algebra-layout > .ord');
+formulaPanel.addEventListener('toggle', () => {
+    const action = formulaPanel.open ? 'Cerrar fórmulas' : 'Abrir fórmulas';
+    const summary = formulaPanel.querySelector('summary');
+    summary.setAttribute('aria-label', action);
+    summary.title = action;
+    window.dispatchEvent(new Event('resize'));
+});
