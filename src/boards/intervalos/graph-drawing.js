@@ -3,10 +3,11 @@ import {createGraphTextEditor} from './text-editor.js';
 import {validGraphImage,clipboardImageData} from './images.js';
 import {shapeBounds,shapeHandles,hitGraphShape,moveGraphShape,resizeGraphShape,validGraphShape} from './shapes.js';
 export function createGraphDrawing({canvas,laser,cursorButton,penButton,highlighterButton,colors,widthInput,preview,undoButton,clearButton,shapeButtons,borderInput,fillInput,opacityInput,opacityOutput,shapeWidth,shapeHeight,deleteButton,pasteButton,imageInput,imageNotice,onImageChange,canEdit,textUI}){
- const ctx=canvas.getContext('2d');let items=[],gesture=null,tool='none',selection=-1,history=[];
+ const ctx=canvas.getContext('2d');let items=[],gesture=null,tool='none',selection=-1,history=[],textTarget=null,textSessionSaved=false;
  const ink={pen:'#ffd84d',highlighter:'#ffd84d'},width={pen:5,highlighter:24};
  const active=()=>tool==='highlighter'?'highlighter':'pen',selected=()=>['shape','image','text'].includes(items[selection]?.t)?items[selection]:null;
  const checkpoint=()=>{history.push(structuredClone(items));if(history.length>60)history.shift();};
+ let textEditor;
  const point=e=>{const r=canvas.getBoundingClientRect();return[Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))];};
 
  const imageCache=new Map();
@@ -17,7 +18,7 @@ export function createGraphDrawing({canvas,laser,cursorButton,penButton,highligh
  imageInput.onchange=()=>{const file=imageInput.files?.[0];if(file)pasteImage(file);imageInput.value='';};
  function paint(){cacheImages();
   ctx.clearRect(0,0,canvas.width,canvas.height);ctx.lineCap='round';ctx.lineJoin='round';
-  for(const item of items){ctx.strokeStyle=ctx.fillStyle=item.c;ctx.lineWidth=item.w;ctx.globalAlpha=item.a;ctx.beginPath();
+  for(const item of items){if(item===textTarget&&textEditor?.isEditing())continue;ctx.strokeStyle=ctx.fillStyle=item.c;ctx.lineWidth=item.w;ctx.globalAlpha=item.a;ctx.beginPath();
    if(item.t==='text'){drawGraphText(ctx,item,canvas.width,canvas.height);continue;}
    if(item.t==='image'){const image=imageCache.get(item.src);if(image?.complete&&image.naturalWidth){const b=shapeBounds(item);ctx.globalAlpha=1;ctx.drawImage(image,b.left*canvas.width,b.top*canvas.height,(b.right-b.left)*canvas.width,(b.bottom-b.top)*canvas.height);}continue;}
    if(item.t==='shape'){const b=shapeBounds(item),x=b.left*canvas.width,y=b.top*canvas.height,w=(b.right-b.left)*canvas.width,h=(b.bottom-b.top)*canvas.height;if(item.kind==='rect')ctx.rect(x,y,w,h);else ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,2*Math.PI);if(item.opacity>0){ctx.globalAlpha=item.opacity;ctx.fillStyle=item.fill;ctx.fill();}ctx.globalAlpha=1;ctx.stroke();}
@@ -30,9 +31,9 @@ export function createGraphDrawing({canvas,laser,cursorButton,penButton,highligh
   const k=active();for(const [button,value]of[[cursorButton,'cursor'],[penButton,'pen'],[highlighterButton,'highlighter'],...shapeButtons.map(b=>[b,b.dataset.graphShape])]){button.classList.toggle('act',tool===value);button.setAttribute('aria-pressed',String(tool===value));}
   for(const button of colors){const on=button.dataset.c===ink[k];button.classList.toggle('sel',on);button.setAttribute('aria-pressed',String(on));}
   widthInput.min=k==='highlighter'?8:1;widthInput.max=k==='highlighter'?70:24;widthInput.value=selected()?.w||width[k];preview.style.width=preview.style.height=Math.min(Number(widthInput.value),40)+'px';preview.style.background=ink[k];preview.style.opacity=k==='highlighter'?'.6':'1';
-  canvas.style.pointerEvents=tool==='none'?'none':'auto';canvas.style.cursor=tool==='cursor'?'none':tool==='select'?'default':'crosshair';laser.hidden=true;controls();paint();
+  canvas.style.pointerEvents=tool==='none'?'none':'auto';canvas.style.cursor=tool==='cursor'?'none':tool==='select'?'default':'crosshair';laser.hidden=true;textUI.button.classList.toggle('act',tool==='text');textUI.button.setAttribute('aria-pressed',String(tool==='text'));controls();paint();
  }
- function choose(next){gesture=null;tool=tool===next?'none':next;if(tool!=='select')selection=-1;refresh();}
+ function choose(next){textEditor?.close();gesture=null;tool=tool===next?'none':next;if(tool!=='select')selection=-1;refresh();}
  cursorButton.onclick=()=>choose('cursor');penButton.onclick=()=>choose('pen');highlighterButton.onclick=()=>choose('highlighter');shapeButtons.forEach(b=>b.onclick=()=>choose(b.dataset.graphShape));
  colors.forEach(button=>button.onclick=()=>{if(['shape','text'].includes(selected()?.t)){checkpoint();selected().c=button.dataset.c;}else{if(tool==='none'||tool==='cursor')tool='pen';ink[active()]=button.dataset.c;}refresh();});
  widthInput.oninput=()=>{if(selected()?.t==='shape'){checkpoint();selected().w=Number(widthInput.value);}else width[active()]=Number(widthInput.value);refresh();};
@@ -41,7 +42,7 @@ export function createGraphDrawing({canvas,laser,cursorButton,penButton,highligh
  deleteButton.onclick=()=>{if(!selected())return;checkpoint();items.splice(selection,1);selection=-1;refresh();};
  undoButton.onclick=()=>{gesture=null;if(history.length)items=history.pop();selection=-1;refresh();};clearButton.onclick=()=>{gesture=null;checkpoint();items=[];selection=-1;refresh();};
  canvas.style.touchAction='none';canvas.addEventListener('pointerdown',e=>{
-  if(tool==='none'||tool==='cursor'||e.button>0)return;e.preventDefault();const p=point(e);canvas.setPointerCapture(e.pointerId);
+  if(tool==='none'||tool==='cursor'||e.button>0)return;e.preventDefault();const p=point(e);if(tool==='text'){beginText(p);return;}canvas.setPointerCapture(e.pointerId);
   if(tool==='select'){const old=selected();let handle=old?shapeHandles(old).findIndex(([x,y])=>Math.hypot((x-p[0])*canvas.width,(y-p[1])*canvas.height)<=12):-1;if(handle<0)selection=items.findLastIndex(s=>['shape','image'].includes(s.t)&&hitGraphShape(s,p,canvas.width,canvas.height));if(selected()){checkpoint();gesture={pointer:e.pointerId,type:'edit',start:p,original:structuredClone(selected()),handle};}refresh();return;}
   checkpoint();if(['square','rect','circle'].includes(tool)){const item={t:'shape',kind:tool==='circle'?'ellipse':'rect',c:borderInput.value,w:width.pen,a:1,fill:fillInput.value,opacity:Number(opacityInput.value)/100,x1:p[0],y1:p[1],x2:p[0],y2:p[1]};items.push(item);selection=items.length-1;gesture={pointer:e.pointerId,type:'shape',start:p,constrain:tool!=='rect'};}
   else{const k=active();items.push({c:ink[k],w:width[k],a:k==='highlighter'?.4:1,p:[p]});gesture={pointer:e.pointerId,type:'stroke'};}paint();
@@ -54,7 +55,10 @@ export function createGraphDrawing({canvas,laser,cursorButton,penButton,highligh
  canvas.addEventListener('pointercancel',()=>{if(gesture)items=history.pop()||[];gesture=null;selection=-1;refresh();});canvas.addEventListener('pointerleave',()=>{laser.hidden=true;});
  new ResizeObserver(()=>{const r=canvas.parentElement;canvas.width=r.clientWidth;canvas.height=r.clientHeight;paint();controls();}).observe(canvas.parentElement);
 
- const textEditor=createGraphTextEditor(textUI,{canEdit,getSelected:selected,apply:(data,editing)=>{checkpoint();if(editing&&selected()?.t==='text')Object.assign(selected(),data);else{const w=Math.min(.8,400/canvas.width),h=Math.min(.9,Math.max(100,data.fontSize*1.4*(data.runs.map(r=>r.text).join('').split('\n').length+1))/canvas.height);items.push({t:'text',...data,x1:.08,y1:.05,x2:.08+w,y2:Math.min(1,.05+h)});selection=items.length-1;}tool='select';refresh();onImageChange();}});
- canvas.addEventListener('dblclick',event=>{if(canEdit()&&selected()?.t==='text')textEditor.open();});
- refresh();return {get:()=>structuredClone(items).map(item=>['shape','image'].includes(item.t)?item:{...item,p:item.p.map(p=>p.map(n=>Math.round(n*1000)/1000))}),set:value=>{gesture=null;selection=-1;history=[];items=structuredClone(value);cacheImages();refresh();}};
+
+ function beginText(p,item=null){textEditor.close();textSessionSaved=false;textTarget=item;selection=item?items.indexOf(item):-1;const w=Math.min(400/canvas.width,.95-p[0]),x=Math.min(p[0],.98),y=Math.min(p[1],.95);const draft=item||{t:'text',runs:[],fontSize:Number(textUI.size.value)||28,c:textUI.color.value||'#082783',x1:x,y1:y,x2:Math.min(1,x+Math.max(4/canvas.width,w)),y2:Math.min(1,y+40/canvas.height)};textEditor.openAt(draft);tool='text';refresh();}
+ textEditor=createGraphTextEditor(textUI,{canEdit,container:canvas.parentElement,activate:(enabled=true)=>{tool=enabled?'text':'select';selection=-1;refresh();},finish:()=>{textTarget=null;refresh();},update:data=>{if(!textTarget&&!data.runs.some(r=>r.text.trim()))return;if(!textSessionSaved){checkpoint();textSessionSaved=true;}if(!textTarget){const left=parseFloat(textUI.editor.style.left)/100,top=parseFloat(textUI.editor.style.top)/100,w=parseFloat(textUI.editor.style.width)/100;textTarget={t:'text',runs:data.runs,fontSize:data.fontSize,c:data.c,x1:left,y1:top,x2:Math.min(1,left+w),y2:Math.min(1,top+Math.max(data.fontSize*1.5,data.height)/canvas.height)};items.push(textTarget);selection=items.length-1;}else Object.assign(textTarget,{runs:data.runs,fontSize:data.fontSize,c:data.c,y2:Math.min(1,textTarget.y1+Math.max(data.fontSize*1.5,data.height)/canvas.height)});controls();paint();onImageChange();}});
+ canvas.addEventListener('dblclick',()=>{if(canEdit()&&selected()?.t==='text')beginText([selected().x1,selected().y1],selected());});
+
+ refresh();return {get:()=>structuredClone(items).map(item=>['shape','image'].includes(item.t)?item:{...item,p:item.p.map(p=>p.map(n=>Math.round(n*1000)/1000))}),set:value=>{textEditor.close();gesture=null;selection=-1;history=[];items=structuredClone(value);cacheImages();refresh();}};
 }
