@@ -37,3 +37,10 @@ input{border:2px solid #9ec5ff;border-radius:16px}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--surface:#233f65;--ink:#eef5ff;background:#101e35;color:#eef5ff}:root:not([data-theme=light]) body{background:#101e35;color:#eef5ff}}
 :root[data-theme=dark]{--surface:#233f65;--ink:#eef5ff;background:#101e35;color:#eef5ff}:root[data-theme=dark] body{background:#101e35;color:#eef5ff}
 :root[data-theme=dark] .order,:root[data-theme=dark] .tools{background:#1b3150;border-color:#557ca7;box-shadow:none;color:#eef5ff}
+/* Keep this board light even when the operating system or room prefers dark. */
+:root,:root[data-theme=dark],:root:not([data-theme=light]){--surface:#fff!important;--ink:#082783!important;--edge:#a1cfff!important;background:#dff5ff!important;color:#082783!important;color-scheme:light!important}
+body,:root[data-theme=dark] body,:root:not([data-theme=light]) body{background:linear-gradient(#ecfaff,#ccefff)!important;color:#082783!important}
+.order,.tools,:root[data-theme=dark] .order,:root[data-theme=dark] .tools{background:#f8fdff!important;color:#082783!important;border-color:#a3d5ff!important;box-shadow:inset 0 0 0 3px #fff,0 3px #c3eaff!important}
+input{background:#fff!important;color:#082783!important}
+.drawing-setting{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:800}.drawing-setting input[type=color]{width:44px;min-width:44px;height:44px;padding:3px;border:1px solid #9ec5ff;border-radius:10px}.drawing-setting input[type=number]{width:62px;min-width:62px;height:44px;font-size:17px;padding:4px 7px;border-radius:10px}
+#delete-shape{font-size:14px;min-height:44px}.tools #colors{flex-wrap:wrap}

@@ -1,6 +1,7 @@
 import type {BoardState,Op,ErrorCode} from './protocol';
 import {buildSteps} from '../boards/operaciones-combinadas/engine.js';
 import {CONFIG} from '../boards/operaciones-combinadas/config.js';
+import {validDrawingItem} from '../boards/operaciones-combinadas/drawing.js';
 
 export type BoardPermissions={student:{itemTypes:readonly string[]|'*';operations:readonly string[];fields:readonly string[]|'*'};teacherOnlyFields:readonly string[]};
 const unrestricted:BoardPermissions={student:{itemTypes:'*',operations:['add','update','remove','order','field'],fields:'*'},teacherOnlyFields:[]};
@@ -45,7 +46,7 @@ export function boardOperationError(boardId:string,role:'teacher'|'student',op:O
   }
   if(op.kind==='add'||op.kind==='update'){
    const item=op.kind==='add'?op.patch:{...state.items[op.id],...op.patch};
-   return only(item,['t','c','w','a','p'])&&item.t==='stroke'&&['#fff02b','#ff8fb8','#7fd4ff','#ffffff'].includes(String(item.c))&&Object.values(CONFIG.drawing).some(preset=>item.w===preset.width&&item.a===preset.opacity)&&Array.isArray(item.p)&&item.p.length>0&&item.p.length<=4000&&item.p.every(q=>Array.isArray(q)&&q.length===2&&q.every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100))?null:'BAD_MESSAGE';
+   return validDrawingItem(item)?null:'BAD_MESSAGE';
   }
   return null;
  }

@@ -7,5 +7,5 @@ export function compileLiveTests(){
   const text=ts.transpileModule(readFileSync(`src/${file}.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '(@shared\/[^']+|\.[^']+)'/g,(_all,path)=>`from '${path.startsWith('@shared/')?'../../shared/'+path.slice(8):path}${path.endsWith('.js')?'':'.js'}'`);
   writeFileSync(out,text);
  }
- for(const name of ['engine','config']){const path=`boards/operaciones-combinadas/${name}.js`;mkdirSync(resolve('.live-test/unit',path,'..'),{recursive:true});writeFileSync(resolve('.live-test/unit',path),readFileSync(resolve('src',path)));}
+ for(const name of ['engine','config','drawing']){const path=`boards/operaciones-combinadas/${name}.js`;mkdirSync(resolve('.live-test/unit',path,'..'),{recursive:true});writeFileSync(resolve('.live-test/unit',path),readFileSync(resolve('src',path)));}
 }

@@ -1,0 +1,8 @@
+import{test}from'node:test';
+import assert from'node:assert/strict';
+import{bounds,handles,hitShape,moveShape,resizeShape,validDrawingItem}from'../../src/boards/operaciones-combinadas/drawing.js';
+const shape={t:'shape',kind:'rect',c:'#123abc',w:7,a:1,x1:.2,y1:.3,x2:.6,y2:.7};
+test('transparent shapes support custom colors and thickness with strict validation',()=>{for(const kind of ['line','rect','ellipse'])assert(validDrawingItem({...shape,kind}));for(const patch of [{fill:'#fff'},{c:'url(x)'},{w:81},{x2:Infinity},{kind:'script'},{a:.5}])assert(!validDrawingItem({...shape,...patch}));assert(validDrawingItem({t:'stroke',c:'#abcdef',w:12,a:1,p:[[0,0],[1,2]]}));});
+test('moving clamps at the canvas edge and preserves width and height',()=>{const moved=moveShape(shape,.8,-1);assert(Math.abs(moved.x2-1)<1e-9);assert.equal(moved.y1,0);assert(Math.abs((moved.x2-moved.x1)-.4)<1e-9);assert(Math.abs((moved.y2-moved.y1)-.4)<1e-9);});
+test('resizing each corner preserves the opposite anchor and permits crossing it',()=>{for(let i=0;i<4;i++){const anchor=handles(shape)[(i+2)%4],resized=resizeShape(shape,i,[.1,.1]);assert(handles(resized).some(p=>p[0]===anchor[0]&&p[1]===anchor[1]));assert(validDrawingItem(resized));}assert.deepEqual(bounds(resizeShape(shape,0,[.9,.9])),{left:.6,top:.7,right:.9,bottom:.9});});
+test('line endpoint editing and hit tests select the correct geometry',()=>{const line={...shape,kind:'line',x1:.1,y1:.2,x2:.8,y2:.2};assert(hitShape(line,[.5,.2],1000));assert(!hitShape(line,[.5,.4],1000));const resized=resizeShape(line,1,[.9,.4]);assert.equal(resized.x1,.1);assert.equal(resized.x2,.9);assert.equal(resized.y2,.4);assert(hitShape(shape,[.4,.5],1000));});

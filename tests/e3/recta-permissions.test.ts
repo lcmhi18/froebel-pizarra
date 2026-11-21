@@ -26,6 +26,10 @@ it('combined operations shares the teacher lesson and rejects pupil control and 
  const forbidden=operation(student,{expression:'1+2',step:1});student.send({type:'ops',ops:[forbidden]});expect((await student.next('error')).code).toBe('FORBIDDEN');
  const stroke={...teacher.operation({kind:'add',id:'teacher:drawing',patch:{t:'stroke',c:'#fff02b',w:5,a:1,p:[[.1,.2],[.6,.25]]}}),boardId:'operaciones-combinadas'};teacher.send({type:'ops',ops:[stroke]});expect((await student.next('ops',m=>m.ops[0].opId===stroke.opId)).ops[0].patch.t).toBe('stroke');
  const erase={...student.operation({kind:'remove',id:'teacher:drawing'}),boardId:'operaciones-combinadas'};student.send({type:'ops',ops:[erase]});expect((await student.next('error')).code).toBe('FORBIDDEN');
+ const shape={...teacher.operation({kind:'add',id:'teacher:rectangle',patch:{t:'shape',kind:'rect',c:'#123abc',w:9,a:1,x1:.1,y1:.2,x2:.5,y2:.4}}),boardId:'operaciones-combinadas'};teacher.send({type:'ops',ops:[shape]});expect((await student.next('ops',m=>m.ops[0].opId===shape.opId)).ops[0].patch.kind).toBe('rect');
+ const resize={...teacher.operation({kind:'update',id:'teacher:rectangle',patch:{x2:.8,y2:.6,c:'#ab1234',w:12}}),boardId:'operaciones-combinadas'};teacher.send({type:'ops',ops:[resize]});await student.next('ops',m=>m.ops[0].opId===resize.opId);
+ const badColor={...teacher.operation({kind:'update',id:'teacher:rectangle',patch:{c:'url(unsafe)'}}),boardId:'operaciones-combinadas'};teacher.send({type:'ops',ops:[badColor]});expect((await teacher.next('error')).code).toBe('BAD_MESSAGE');
+ expect((await teacher.snapshot()).state.items['teacher:rectangle']).toEqual({t:'shape',kind:'rect',c:'#ab1234',w:12,a:1,x1:.1,y1:.2,x2:.8,y2:.6});
  for(const value of [{expression:'7/2',step:0},{expression:'1+2',step:60},{expression:'1+2',step:0,unexpected:true}]){const invalid=operation(teacher,value);teacher.send({type:'ops',ops:[invalid]});expect((await teacher.next('error')).code).toBe('BAD_MESSAGE');}
  expect((await teacher.snapshot()).state.fields.lesson).toEqual({expression:'30-[12-(5*3-20)]',step:2});
 });
