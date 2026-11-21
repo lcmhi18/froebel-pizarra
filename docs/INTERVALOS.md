@@ -15,3 +15,5 @@ Verificación: `npm run test:intervalos` (34 pruebas, con operaciones contrastad
 Resolución automática: detecta el tema desde la operación; A ∪ B / A ∩ B pueden usar los conjuntos activos del editor sin repetir los extremos. Las definiciones escritas explícitamente tienen prioridad. Los errores se indican junto al ejercicio y conservan los pasos y las notas del lienzo.
 
 La barra del editor de gráficos comparte los controles de la barra principal: cursor láser, lápiz y resaltador con grosor/color independientes, siete colores, vista previa, deshacer y borrar trazos. Los trazos conservan el formato compartido de sala. Comprobación en navegador: lápiz continuo, resaltador transparente y borrado sin eliminar los intervalos.
+
+Figuras del gráfico: cuadrado, rectángulo y círculo/óvalo, selección y movimiento, ocho tiradores para ancho/alto independientes, medidas en píxeles, borde y relleno configurables, opacidad de 0 a 100% (0% inicialmente), quitar figura y deshacer. Las figuras se sincronizan en la sala; el servidor valida sus estilos, dimensiones y límites. Pruebas: 38 de intervalos/figuras y 30 de sala, más compilación completa.

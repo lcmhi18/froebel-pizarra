@@ -134,7 +134,7 @@ it('the 201st pin and a multi-op over-limit transaction are rolled back',async()
 });
 it('interval lessons share graphs, professor notes and strokes; student writes and malformed states are refused',async()=>{
  const {teacher,student}=await fixture();teacher.send({type:'set_board',boardId:'intervalos'});await student.next('snapshot_end');await teacher.next('snapshot_end');teacher.frames=[];student.frames=[];
- const lesson={expression:'A = [−5; 3⟩ , B = [1; 7] , A ∪ B',topic:1,shown:4,prof:true,work:'<div>Mi resolución</div><div>Segunda línea</div>',strokes:[{c:'#123abc',w:5,a:1,p:[[.1,.2],[.3,.4]]}],graph:{rows:[{a:-5,b:3,L:'c',R:'o',on:true},{a:1,b:7,L:'c',R:'c',on:true}],operation:'u'},graphInk:[{c:'#aabbcc',w:24,a:.4,p:[[.2,.3],[.5,.6]]}],formulas:[]};
+ const lesson={expression:'A = [−5; 3⟩ , B = [1; 7] , A ∪ B',topic:1,shown:4,prof:true,work:'<div>Mi resolución</div><div>Segunda línea</div>',strokes:[{c:'#123abc',w:5,a:1,p:[[.1,.2],[.3,.4]]}],graph:{rows:[{a:-5,b:3,L:'c',R:'o',on:true},{a:1,b:7,L:'c',R:'c',on:true}],operation:'u'},graphInk:[{c:'#aabbcc',w:24,a:.4,p:[[.2,.3],[.5,.6]]},{t:'shape',kind:'ellipse',c:'#082783',w:5,a:1,fill:'#7fd4ff',opacity:.35,x1:.1,y1:.2,x2:.6,y2:.8}],formulas:[]};
  const operation=(client:Client,value:unknown)=>({...client.operation({kind:'field',field:'lesson',value}),boardId:'intervalos'});
  const initial=operation(teacher,lesson);teacher.send({type:'ops',ops:[initial]});expect((await student.next('ops',m=>m.ops[0].opId===initial.opId)).ops[0].value).toEqual(lesson);
  const pupil=operation(student,{...lesson,shown:5});student.send({type:'ops',ops:[pupil]});expect((await student.next('error')).code).toBe('FORBIDDEN');

@@ -8,5 +8,5 @@ export function compileLiveTests(){
   writeFileSync(out,text);
  }
  for(const name of ['engine','config','drawing']){const path=`boards/operaciones-combinadas/${name}.js`;mkdirSync(resolve('.live-test/unit',path,'..'),{recursive:true});writeFileSync(resolve('.live-test/unit',path),readFileSync(resolve('src',path)));}
- for(const path of ['boards/intervalos/model.js','boards/intervalos/engine.js','boards/algebra-completa/engine.js']){mkdirSync(resolve('.live-test/unit',path,'..'),{recursive:true});writeFileSync(resolve('.live-test/unit',path),readFileSync(resolve('src',path)));}
+ for(const path of ['boards/intervalos/model.js','boards/intervalos/engine.js','boards/intervalos/shapes.js','boards/algebra-completa/engine.js']){mkdirSync(resolve('.live-test/unit',path,'..'),{recursive:true});writeFileSync(resolve('.live-test/unit',path),readFileSync(resolve('src',path)));}
 }
