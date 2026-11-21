@@ -12,4 +12,5 @@ export const BOARD_MANIFEST = [
   { id:'aritmetica',title:'Aritmética de Primaria',path:'/boards/aritmetica/',engine:'svg-js',localKeys:['tool','selection','color','tab','view','hold','snap','largeBoard','hideUpper','hideLower'],fieldKeys:['regions'] },
   {id:'recta-numerica',title:'Recta numérica · Álgebra de Primaria',path:'/boards/recta-numerica/',engine:'svg-js',localKeys:['sg','dg','msg','drag','hot','nc'],fieldKeys:['a','b','note','fs'],permissions:BOARD_PERMISSIONS['recta-numerica']},
   {id:'operaciones-combinadas',title:'Operaciones combinadas · Álgebra de Primaria',path:'/boards/operaciones-combinadas/',engine:'svg-js',localKeys:['tool','color','theme'],fieldKeys:['lesson'],permissions:BOARD_PERMISSIONS['operaciones-combinadas']},
+  {id:'intervalos',title:'Intervalos en ℤ · Álgebra de Primaria',path:'/boards/intervalos/',engine:'svg-js',localKeys:['tool','color','hideUpper','hideLower','largeBoard'],fieldKeys:['lesson'],permissions:BOARD_PERMISSIONS.intervalos},
 ] as const;

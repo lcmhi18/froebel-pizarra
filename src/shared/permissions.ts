@@ -2,6 +2,7 @@ import type {BoardState,Op,ErrorCode} from './protocol';
 import {buildSteps} from '../boards/operaciones-combinadas/engine.js';
 import {CONFIG} from '../boards/operaciones-combinadas/config.js';
 import {validDrawingItem} from '../boards/operaciones-combinadas/drawing.js';
+import {validLesson as validIntervalLesson} from '../boards/intervalos/model.js';
 
 export type BoardPermissions={student:{itemTypes:readonly string[]|'*';operations:readonly string[];fields:readonly string[]|'*'};teacherOnlyFields:readonly string[]};
 const unrestricted:BoardPermissions={student:{itemTypes:'*',operations:['add','update','remove','order','field'],fields:'*'},teacherOnlyFields:[]};
@@ -9,6 +10,7 @@ export const BOARD_PERMISSIONS:Record<string,BoardPermissions>={
  prueba:unrestricted,_plantilla:unrestricted,geometria:unrestricted,konva:unrestricted,aritmetica:unrestricted,
  'recta-numerica':{student:{itemTypes:['pin'],operations:['add','update','remove','order','field'],fields:['a','b']},teacherOnlyFields:['note','fs']},
  'operaciones-combinadas':{student:{itemTypes:[],operations:[],fields:[]},teacherOnlyFields:['lesson']},
+ intervalos:{student:{itemTypes:[],operations:[],fields:[]},teacherOnlyFields:['lesson']},
 };
 const record=(value:unknown):value is Record<string,unknown>=>!!value&&typeof value==='object'&&!Array.isArray(value)&&Object.getPrototypeOf(value)===Object.prototype;
 const only=(value:Record<string,unknown>,keys:readonly string[])=>Object.keys(value).every(key=>keys.includes(key));
@@ -38,6 +40,10 @@ export function validNote(value:unknown):boolean{
 }
 /** Called for every authenticated operation, before application or persistence. */
 export function boardOperationError(boardId:string,role:'teacher'|'student',op:Op,state:BoardState):ErrorCode|null{
+ if(boardId==='intervalos'){
+  if(role!=='teacher')return 'FORBIDDEN';
+  return op.kind==='field'&&op.field==='lesson'&&validIntervalLesson(op.value)?null:'BAD_MESSAGE';
+ }
  if(boardId==='operaciones-combinadas'){
   if(role!=='teacher')return 'FORBIDDEN';
   if(op.kind==='field'){

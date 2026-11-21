@@ -132,3 +132,12 @@ it('the 201st pin and a multi-op over-limit transaction are rolled back',async()
  const ops=[student.operation({kind:'remove',id:'teacher:p0'}),...['a','b'].map(suffix=>student.operation({kind:'add',id:student.author+':'+suffix,patch:{t:'pin',n:1,v:1}}))];student.send({type:'ops',ops});
  expect((await student.next('error')).code).toBe('STATE_TOO_LARGE');const snapshot=await teacher.snapshot();expect(Object.keys(snapshot.state.items)).toHaveLength(200);expect(snapshot.state.items['teacher:p0']).toBeDefined();expect(snapshot.seq).toBe(0);
 });
+it('interval lessons share graphs, professor notes and strokes; student writes and malformed states are refused',async()=>{
+ const {teacher,student}=await fixture();teacher.send({type:'set_board',boardId:'intervalos'});await student.next('snapshot_end');await teacher.next('snapshot_end');teacher.frames=[];student.frames=[];
+ const lesson={expression:'A = [−5; 3⟩ , B = [1; 7] , A ∪ B',topic:1,shown:4,prof:true,work:'<div>Mi resolución</div><div>Segunda línea</div>',strokes:[{c:'#123abc',w:5,a:1,p:[[.1,.2],[.3,.4]]}],graph:{rows:[{a:-5,b:3,L:'c',R:'o',on:true},{a:1,b:7,L:'c',R:'c',on:true}],operation:'u'},graphInk:[{c:'#aabbcc',w:24,a:.4,p:[[.2,.3],[.5,.6]]}],formulas:[]};
+ const operation=(client:Client,value:unknown)=>({...client.operation({kind:'field',field:'lesson',value}),boardId:'intervalos'});
+ const initial=operation(teacher,lesson);teacher.send({type:'ops',ops:[initial]});expect((await student.next('ops',m=>m.ops[0].opId===initial.opId)).ops[0].value).toEqual(lesson);
+ const pupil=operation(student,{...lesson,shown:5});student.send({type:'ops',ops:[pupil]});expect((await student.next('error')).code).toBe('FORBIDDEN');
+ for(const value of [{...lesson,shown:99},{...lesson,topic:8},{...lesson,graph:{rows:[],operation:'u'}},{...lesson,strokes:[{c:'url(x)',w:5,a:1,p:[[0,0]]}]}]){const bad=operation(teacher,value);teacher.send({type:'ops',ops:[bad]});expect((await teacher.next('error')).code).toBe('BAD_MESSAGE');}
+ expect((await teacher.snapshot()).state.fields.lesson).toEqual(lesson);
+});

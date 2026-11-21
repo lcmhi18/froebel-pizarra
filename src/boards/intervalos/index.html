@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pizarra de intervalos en ℤ</title>
+
+
+</head>
+<body>
+<header class="academy-header"><a href="/algebra/">← Volver a Álgebra</a><strong>Intervalos · Froebel Academy</strong><div class="header-actions"><button id="toggle-upper" type="button">Ocultar menú superior</button><button id="toggle-lower" type="button">Ocultar menú inferior</button><button id="large-board" type="button">Pizarra grande</button><div id="live-slot"></div></div></header><p id="status" role="status" hidden></p><main id="workspace">
+<h1><i class="a">⟨a;</i><i class="c">b]</i> Pizarra de intervalos en ℤ</h1>
+<p class="sub">Intervalos, unión, intersección, diferencia y complemento. Escribe un ejercicio y la ranita lo explica paso a paso.</p><div id="upper-menu"><div class="tabs" id="tabs"></div>
+<div class="row">
+<input id="inp" value="" aria-label="Ejercicio" maxlength="2000" autocomplete="off" spellcheck="false">
+<button id="go">Resolver</button>
+</div>
+<div class="chips" id="exps" aria-label="Exponentes"></div>
+<div class="chips" id="keys"></div>
+<p class="hint">Escribe intervalos con ⟨ ⟩ [ ] y “;” (ejemplo: A = ⟨2; 8⟩ , B = [5; 12⟩ , A ∪ B). Complemento: A'. Diferencia simétrica: A Δ B. También puedes escribir una desigualdad: −3 &lt; x ≤ 6.</p>
+<div class="chips" id="chips"></div>
+</div><div class="interval-layout"><aside class="interval-reference"><details class="ord" open><summary aria-label="Cerrar fórmulas"><span class="formula-title">📒 Fórmulas</span><span class="formula-close" aria-hidden="true">✕</span><span class="formula-open" aria-hidden="true">❯</span></summary><div class='ftw'><table class='ft'><thead><tr><th>Tipo</th><th>Extremos</th><th>Gráfico</th><th>Notación</th><th>Signo</th></tr></thead><tbody><tr><td>Abierto</td><td>NO se consideran</td><td><i class='dt'></i><i class='dt'></i></td><td>⟨ a ; b ⟩</td><td>&lt; &nbsp; &lt;</td></tr><tr><td>Cerrado</td><td>SÍ se consideran</td><td><i class='dt f'></i><i class='dt f'></i></td><td>[ a ; b ]</td><td>≤ &nbsp; ≤</td></tr><tr><td>Semiabierto</td><td>a NO, b SÍ</td><td><i class='dt'></i><i class='dt f'></i></td><td>⟨ a ; b ]</td><td>&lt; &nbsp; ≤</td></tr><tr><td>Semiabierto</td><td>a SÍ, b NO</td><td><i class='dt f'></i><i class='dt'></i></td><td>[ a ; b ⟩</td><td>≤ &nbsp; &lt;</td></tr><tr><td>Infinito</td><td>∞ siempre abierto</td><td>−∞ ⟶ +∞</td><td>⟨ −∞ ; b ]</td><td>x ≤ b</td></tr></tbody></table></div></details><div id="fx" class="rules"></div></aside><section class="algebra-workspace" aria-label="Pizarra de intervalos"><details class="graph-panel" open><summary aria-label="Cerrar editor de gráficos"><span>📈 Hacer gráfico</span><span class="formula-close" aria-hidden="true">✕</span><span class="formula-open" aria-hidden="true">❯</span></summary><div class='gb'><div id='gM'></div><div class='row'><label>a <input id='gA' type='number' value='-5' min='-99' max='99'></label><select id='gL' aria-label='Extremo izquierdo'><option value='c'>a cerrado ●</option><option value='o'>a abierto ○</option><option value='i'>−∞</option></select><label>b <input id='gB' type='number' value='3' min='-99' max='99'></label><select id='gR' aria-label='Extremo derecho'><option value='o'>b abierto ○</option><option value='c'>b cerrado ●</option><option value='i'>+∞</option></select></div><div class='row'><button id='gP' class='ghost' type='button'>✏️ Pintar</button><button id='gH' class='ghost' type='button'>🖍️ Resaltar</button><button class='gcb' data-c='#d6336c' style='background:#d6336c' aria-label='Rosado'></button><button class='gcb' data-c='#1f7bd1' style='background:#1f7bd1' aria-label='Azul'></button><button class='gcb' data-c='#2f9e44' style='background:#2f9e44' aria-label='Verde'></button><button class='gcb' data-c='#e8a317' style='background:#e8a317' aria-label='Amarillo'></button><button class='gcb' data-c='#7a4fd6' style='background:#7a4fd6' aria-label='Morado'></button><button id='gU' class='ghost' type='button'>↩ Deshacer</button><button id='gX' class='ghost' type='button'>🧽 Borrar pintura</button></div><div id='gW'><div id='gS'></div><canvas id='gCv'></canvas></div><p id='gT'></p></div></details>
+<div class="wrap" id="wrap"><div class="board" id="board" aria-live="polite"></div><canvas id="ink"></canvas><div id="laser"></div><div id="pf"></div></div>
+<div id="work" class="work" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Resolución de la profe" spellcheck="false" data-ph="Escribe aquí tu resolución, un paso por línea…"></div>
+<div class="tools">
+<button id="tCur" class="ghost" aria-pressed="false">👆 Cursor</button>
+<button id="tPen" class="ghost" aria-pressed="false">✏️ Lápiz</button>
+<button id="tHi" class="ghost" aria-pressed="false">🖍️ Resaltador</button>
+<button class="col" data-c="#ffd84d" style="background:#ffd84d" aria-label="Amarillo"></button>
+<button class="col" data-c="#ff8fb8" style="background:#ff8fb8" aria-label="Rosado"></button>
+<button class="col" data-c="#7fd4ff" style="background:#7fd4ff" aria-label="Celeste"></button>
+<button class="col" data-c="#ffffff" style="background:#ffffff" aria-label="Blanco"></button>
+<button class="col" data-c="#7dff9a" style="background:#7dff9a" aria-label="Verde"></button>
+<button class="col" data-c="#ffb36b" style="background:#ffb36b" aria-label="Naranja"></button>
+<button class="col" data-c="#ff6b6b" style="background:#ff6b6b" aria-label="Rojo"></button>
+<label class="thick" for="thick">Grosor <input type="range" id="thick" min="1" max="24" value="5" aria-label="Grosor del trazo"><span class="tw"><span id="tdot"></span></span></label>
+<button id="undo" class="ghost">↩ Deshacer</button>
+<button id="wipe" class="ghost">🧽 Borrar todo</button>
+</div>
+<div class="frog"><div class="face" id="face"><img src="/assets/recta/frog.webp" alt="Ranita que explica los intervalos"></div><div class="say" id="say"></div></div>
+<div class="ctrl">
+<button id="mode" class="ghost" aria-pressed="false">🧑‍🏫 Modo profe: resuelvo yo</button>
+<button id="back" class="ghost">Atrás</button>
+<button id="next">Siguiente paso</button>
+<button id="reset" class="ghost">Reiniciar</button>
+<span class="count" id="count"></span>
+</div>
+</section></div></main>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
