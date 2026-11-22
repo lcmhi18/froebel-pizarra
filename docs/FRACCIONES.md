@@ -16,3 +16,5 @@ La lección y las anotaciones se sincronizan como campos independientes. En sala
 ## Verificación
 
 `npm run test:fracciones`: racionales, precedencia, periódicos, vuelta decimal/fracción para todos los denominadores 1–99, áreas ponderadas y validación de datos. `npm run test:e3`: transmisión a alumnos, imágenes fragmentadas y rechazo de escrituras de alumnos o estados inválidos. Revisión en navegador de cuatro temas, texto multilínea/exponentes, dibujo continuo, movimiento, ocho tiradores, borrador/deshacer, pegado de imágenes y ancho móvil de 390 px.
+
+Texto matemático: al escribir `4/7 + 3/4`, las fracciones se presentan apiladas durante la edición y en el lienzo. Los datos compartidos conservan la escritura original en texto plano, por lo que no cambia el protocolo de sala. Enter inserta otra línea; se conserva el formato de exponentes.

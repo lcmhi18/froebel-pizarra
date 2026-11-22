@@ -267,3 +267,9 @@ h1{font-size:36px;padding:4px 24px;margin-bottom:9px}
 .customize input[type=range]{min-width:0;width:100%}
 }
 
+
+/* The hidden slash remains editable text, so room state stays plain and safe. */
+.graph-inline-text .inline-math-fraction{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;position:relative;line-height:1.05;font-weight:800;margin:0 .12em}
+.graph-inline-text .inline-math-numerator{padding:0 .15em .1em;text-align:center;width:100%}
+.graph-inline-text .inline-math-denominator{padding:.1em .15em 0;border-top:.075em solid currentColor;text-align:center;width:100%}
+.graph-inline-text .inline-math-slash{position:absolute;font-size:0;opacity:0;pointer-events:none}

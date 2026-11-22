@@ -1,6 +1,6 @@
 import { clipboardImageData } from '../intervalos/images.js';
 import { createGraphTextEditor } from '../intervalos/text-editor.js';
-import { drawGraphText } from '../intervalos/text.js';
+import {drawMathText,decorateMathText} from './math-text.js';
 import { itemBounds, transformItem, validFractionDrawing } from './drawing-model.js';
 const clamp = (n, a = 0, b = 1) => Math.max(a, Math.min(b, n));
 export function attachDrawing({ canvas, toolbar, textUI, fractionUI, canEdit, onChange }) {
@@ -37,7 +37,7 @@ export function attachDrawing({ canvas, toolbar, textUI, fractionUI, canEdit, on
                     ctx.drawImage(image, s.x1 * canvas.width, s.y1 * canvas.height, (s.x2 - s.x1) * canvas.width, (s.y2 - s.y1) * canvas.height);
             }
             else if (s.t === 'text')
-                drawGraphText(ctx, s, canvas.width, canvas.height);
+                drawMathText(ctx, s, canvas.width, canvas.height);
             else if (s.t === 'fraction') {
                 const b = itemBounds(s), x = (b.left + b.right) * canvas.width / 2, y = b.top * canvas.height, w = (b.right - b.left) * canvas.width;
                 ctx.font = `800 ${s.fontSize}px Nunito,sans-serif`;
@@ -100,7 +100,7 @@ export function attachDrawing({ canvas, toolbar, textUI, fractionUI, canEdit, on
     toolbar.querySelector('[data-undo]').onclick = () => { if (!canEdit() || !history.length)
         return; textEditor.close(); items = history.pop(); selected = -1; emit(); refresh(); };
     function beginText(p, item = null) { textEditor.close(); textTarget = item; savedText = false; selected = item ? items.indexOf(item) : -1; textEditor.openAt(item || { runs: [], c: color, fontSize, x1: p[0], y1: p[1], x2: Math.min(1, p[0] + Math.min(.6, 350 / canvas.width)), y2: Math.min(1, p[1] + 40 / canvas.height) }); tool = 'text'; refresh(); }
-    textEditor = createGraphTextEditor(textUI, { canEdit, container: stage, activate: (yes = true) => setTool(yes ? 'text' : 'move'), finish: () => { textTarget = null; refresh(); }, update: data => { if (!textTarget && !data.runs.some(r => r.text.trim()))
+    textEditor = createGraphTextEditor(textUI, { decorate:decorateMathText, canEdit, container: stage, activate: (yes = true) => setTool(yes ? 'text' : 'move'), finish: () => { textTarget = null; refresh(); }, update: data => { if (!textTarget && !data.runs.some(r => r.text.trim()))
             return; if (!savedText) {
             remember();
             savedText = true;
