@@ -154,3 +154,12 @@ it('fractions lessons and annotation images reach pupils; only the teacher can e
  const before=await teacher.snapshot();for(const field of ['lesson','drawing']){student.send({type:'ops',ops:[op(student,field,field==='lesson'?lesson:[])]});expect((await student.next('error')).code).toBe('FORBIDDEN');}
  for(const [field,value]of [['lesson',{...lesson,parts:{...lesson.parts,d:0}}],['lesson',{...lesson,parts:{...lesson.parts,n:4}}],['drawing',[{...drawing[0],w:400}]],['unknown',{}]] as const){teacher.send({type:'ops',ops:[op(teacher,field,value)]});expect((await teacher.next('error')).code).toBe('BAD_MESSAGE');}expect(await teacher.snapshot()).toEqual(before);
 });
+it('arithmetic workshop synchronizes teacher exercises and refuses student edits',async()=>{
+ const {teacher,student}=await fixture();teacher.send({type:'set_board',boardId:'taller-aritmetico'});await student.next('snapshot_end');await teacher.next('snapshot_end');teacher.frames=[];student.frames=[];
+ const lesson={topic:'bases',mcm:'12,18',mcd:'24,36',powers:{base:'3',exponent:4},fractions:'4/7 + 3/4',decomposition:'360',decompositionMode:'prime',bases:{value:'10,625',from:10,to:2},shown:3};
+ const op=(client:Client,field:string,value:unknown)=>({...client.operation({kind:'field',field,value}),boardId:'taller-aritmetico'});
+ const shared=op(teacher,'exercise',lesson);teacher.send({type:'ops',ops:[shared]});expect((await student.next('ops',f=>f.ops[0].opId===shared.opId)).ops[0].value).toEqual(lesson);
+ const drawing=[{t:'text',runs:[{text:'4/7 + 3/4\nx',sup:false},{text:'2',sup:true}],fontSize:28,c:'#123abc',x1:.1,y1:.1,x2:.7,y2:.8}];const note=op(teacher,'drawing',drawing);teacher.send({type:'ops',ops:[note]});expect((await student.next('ops',f=>f.ops[0].opId===note.opId)).ops[0].value).toEqual(drawing);
+ const before=await teacher.snapshot();for(const field of ['exercise','drawing']){student.send({type:'ops',ops:[op(student,field,field==='exercise'?lesson:drawing)]});expect((await student.next('error')).code).toBe('FORBIDDEN');}
+ for(const value of [{...lesson,shown:999},{...lesson,bases:{value:'10',from:1,to:2}},{...lesson,topic:'other'}]){teacher.send({type:'ops',ops:[op(teacher,'exercise',value)]});expect((await teacher.next('error')).code).toBe('BAD_MESSAGE');}expect(await teacher.snapshot()).toEqual(before);
+});

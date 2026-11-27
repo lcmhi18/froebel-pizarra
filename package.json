@@ -37,7 +37,8 @@
     "test:combined": "node --test tests/combined/*.test.mjs",
     "test:algebra": "node --test tests/algebra/*.test.mjs",
     "test:intervalos": "node --test tests/intervalos/*.test.mjs",
-    "test:fracciones": "node --test tests/fracciones/*.test.mjs"
+    "test:fracciones": "node --test tests/fracciones/*.test.mjs",
+    "test:taller": "node --test tests/taller/*.test.mjs"
   },
   "dependencies": {
     "@fontsource/fredoka": "5.3.0",

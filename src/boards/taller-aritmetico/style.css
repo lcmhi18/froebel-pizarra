@@ -1,0 +1,75 @@
+:root{background:#dff5ff;color:#082783;--card:#fff;--ink:#082783;--muted:#3e6299}
+body{background:#dff5ff}
+.academy{background:#0750ee;color:white;border:0}
+.academy a{color:white}
+.academy a:hover{background:#0043c8}
+.academy button{color:#082783}
+.workshop-heading{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:15px}
+.workshop-heading p{margin:0 0 4px;font-size:14px;font-weight:800}
+.workshop-heading h1{margin:0;padding:0;background:none;border:0;box-shadow:none;text-shadow:none;color:#082783;display:block;text-align:left;font-size:38px;line-height:1.1}
+.view-actions{display:flex;gap:8px;flex-wrap:wrap}
+.view-actions button{font-size:13px;min-height:40px;border-color:#9ac9ff;background:#fff;box-shadow:0 4px #addbff}
+.workshop-tabs{display:flex;gap:8px;overflow-x:auto;padding:8px;border:2px solid #9fd4ff;background:#f8fdff;border-radius:22px;margin-bottom:12px}
+.workshop-tabs button{flex:1;white-space:nowrap;border-color:#b6d7ff;background:#fff;box-shadow:0 4px #b3dfff;font-size:18px;padding:10px 15px}
+.workshop-tabs button[aria-selected=true]{background:#ffe327;border-color:#efbd05;box-shadow:0 4px #d8b500}
+.workshop-controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center;background:#f8fdff;border:2px solid #a6d4ff;padding:14px;border-radius:21px}
+.workshop-controls label{display:flex;gap:10px;align-items:center;font-size:16px;font-weight:800}
+.workshop-controls input,.workshop-controls select{border-color:#a6c9ff;min-height:43px;font-size:21px}
+.workshop-controls input[type=text]{width:min(520px,68vw)}
+.workshop-controls small{font-size:13px;flex:1;min-width:190px}
+.workshop-controls .resolve{margin-left:auto;background:#0758f7;color:white;border-color:#0750e7;box-shadow:0 4px #84b9ff}
+.workshop-controls p{margin:0}
+#examples{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 0}
+#examples button{font-size:15px;border-color:#a7d0ff;background:#fff;box-shadow:0 3px #aedbff;min-height:38px;padding:5px 13px}
+#examples>span{font-size:13px;font-weight:800}
+.board{border-color:#8dc7ff;box-shadow:0 5px #b6e3ff;padding:25px;min-height:500px;background-color:white;background-image:linear-gradient(#eaf2fc 1px,transparent 1px),linear-gradient(90deg,#eaf2fc 1px,transparent 1px);background-size:24px 24px}
+#output{min-height:440px;pointer-events:auto}
+.exercise-title{display:flex;gap:20px;align-items:center;flex-wrap:wrap;padding:0 0 15px}
+.exercise-title>span{font-size:15px;font-weight:800}
+.workshop-math{font:800 29px/1.6 Nunito,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere}
+.workshop-math sup{font-size:.65em;vertical-align:super;line-height:0}
+.workshop-math .inline-math-fraction{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;position:relative;line-height:1.05;font-weight:800;margin:0 .12em}
+.workshop-math .inline-math-numerator{padding:0 .15em .1em;text-align:center;width:100%}
+.workshop-math .inline-math-denominator{padding:.1em .15em 0;border-top:.075em solid currentColor;text-align:center;width:100%}
+.workshop-math .inline-math-slash{position:absolute;font-size:0;opacity:0;pointer-events:none}
+.solution-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:22px}
+.solution-actions button{background:#fff;border-color:#b4cfff;box-shadow:0 4px #badbff;font-size:15px}
+.solution-actions .next{background:#d0f9e7;border-color:#54cda3}
+.solution-actions>span{font-size:13px}
+.worked-steps{display:flex;flex-direction:column;gap:14px}
+.worked-step{background:#ffffffed;border:2px solid #c2dcff;border-radius:17px;padding:12px 18px}
+.worked-step h2{font-size:16px;margin:0 0 4px;color:#315f9e}
+.worked-step .workshop-math{font-size:27px}
+.worked-step.final-answer{background:#fff5b8;border-color:#f1ce36}
+.scratch-hint{font-size:15px;color:#41618f;margin:35px 0;max-width:580px}
+.toolbar{border-color:#a0d4ff;background:#f8fdff;box-shadow:0 4px #b1dfff}
+.toolbar button,.toolbar .image-button{border-color:#acd0ff;background:#fff;box-shadow:0 4px #b2dfff}
+.toolbar button.active{background:#ffe327;border-color:#efbd05}
+.text-options,.fraction-options{border-color:#9bcaff}
+.large-board #board{min-height:78vh}
+.large-board #output{min-height:70vh}
+.large-board .academy{display:none}
+.help{color:#315e95}
+.workshop-controls input:disabled{opacity:.6}
+
+@media(max-width:750px){.workshop-heading{align-items:start;flex-direction:column;gap:12px}
+.workshop-heading h1{font-size:30px}
+.view-actions{gap:6px}
+.view-actions button{font-size:11px;padding:6px 9px;min-height:35px}
+.workshop-tabs button{font-size:16px;padding:8px 13px;min-height:42px}
+.workshop-controls{gap:10px;padding:11px}
+.workshop-controls label{font-size:14px;flex-wrap:wrap;gap:6px;max-width:100%}
+.workshop-controls input[type=text]{width:min(100%,500px)}
+.workshop-controls input,.workshop-controls select{font-size:18px}
+.workshop-controls .resolve{margin-left:0;width:100%}
+.workshop-controls small{min-width:0;flex-basis:100%}
+.board{padding:15px;min-height:520px}
+.workshop-math{font-size:24px}
+.worked-step .workshop-math{font-size:22px}
+.worked-step{padding:10px}
+.exercise-title{gap:10px}
+#examples button{font-size:13px}
+.solution-actions{gap:8px}
+.solution-actions button{font-size:13px}
+.academy{font-size:12px}
+}

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Taller de Aritmética · Froebel Academy</title>
+</head>
+<body>
+<header class="academy">
+<a href="/aritmetica/">← Aritmética de Primaria</a>
+<strong>Froebel Academy</strong>
+<div id="live-slot">
+</div>
+</header>
+<main id="workspace">
+<div class="workshop-heading">
+<div>
+<p>Primaria · Resolver, dibujar y explicar</p>
+<h1>Taller de Aritmética</h1>
+</div>
+<div class="view-actions">
+<button id="toggle-upper">Ocultar menú superior</button>
+<button id="toggle-lower">Ocultar herramientas</button>
+<button id="large-board">Pizarra grande</button>
+</div>
+</div>
+<div id="upper-area">
+<nav id="topics" class="workshop-tabs" aria-label="Temas de aritmética">
+</nav>
+<section id="controls" class="workshop-controls" aria-label="Ejercicio">
+</section>
+<div id="examples" aria-label="Ejemplos">
+</div>
+</div>
+<p id="room-status" role="status" hidden>
+</p>
+<p id="error" role="alert" hidden>
+</p>
+<section id="board" class="board">
+<div id="output">
+</div>
+<canvas id="annotation-canvas" aria-label="Lienzo de anotaciones">
+</canvas>
+</section>
+<section id="text-options" class="text-options" aria-label="Opciones de texto" hidden>
+<div>
+<button id="text-up">↑ Exponente</button>
+<button id="text-down">↓ Normal</button>
+<button data-text-sign="=">=</button>
+<button data-text-sign="≥">≥</button>
+<button data-text-sign="≤">≤</button>
+<button data-text-sign=">">&gt;</button>
+<button data-text-sign="<">&lt;</button>
+<label>Tamaño <input id="text-size" type="number" min="12" max="96" value="28">
+</label>
+<label>Color <input id="text-color" type="color" value="#29254e">
+</label>
+<button id="text-close">Terminar texto</button>
+</div>
+<div id="text-editor" contenteditable="true" role="textbox" aria-label="Texto de la pizarra" aria-multiline="true" spellcheck="false">
+</div>
+<p id="text-error" hidden>
+</p>
+</section>
+<section id="fraction-options" class="fraction-options" aria-label="Fracción para anotar" hidden>
+<label>Arriba (numerador) <input id="fraction-n" type="number" value="1">
+</label>
+<label>Abajo (denominador) <input id="fraction-d" type="number" min="1" value="2">
+</label>
+<span>Toca el tablero para colocar la fracción.</span>
+</section>
+<p id="drawing-error" role="alert" hidden>
+</p>
+<p class="help">Texto: haz clic y escribe. 4/7 se apila automáticamente. ↑ exponente · ↓ normal · Enter otra línea. Ctrl+V pega imágenes.</p>
+</main>
+<footer id="toolbar" class="toolbar" aria-label="Herramientas de la pizarra">
+<button data-tool="pen">
+<span data-icon="pencil">
+</span>Dibujar</button>
+<button id="text-button" data-tool="text">
+<span data-icon="text">
+</span>Texto</button>
+<button data-size="0.85">A−</button>
+<button data-size="1.18">A+</button>
+<output data-scale>100%</output>
+<button data-tool="fraction">
+<span class="fraction-symbol">a<br>
+<i>
+</i>b</span>Fracción</button>
+<button data-tool="line">
+<span data-icon="ruler">
+</span>Línea</button>
+<label class="image-button">
+<span data-icon="image">
+</span>Imagen<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+</label>
+<button data-tool="move">
+<span data-icon="hand">
+</span>Mover</button>
+<div class="drawing-colors">
+<button data-color="#ff5d8f" style="--color:#ff5d8f" aria-label="Rosado">
+</button>
+<button data-color="#4d96ff" style="--color:#4d96ff" aria-label="Azul">
+</button>
+<button data-color="#2dc98a" style="--color:#2dc98a" aria-label="Verde">
+</button>
+<button data-color="#ffc233" style="--color:#ffc233" aria-label="Amarillo">
+</button>
+</div>
+<button data-tool="erase">
+<span data-icon="eraser">
+</span>Borrador</button>
+<button data-undo>
+<span data-icon="undo">
+</span>Deshacer</button>
+<button data-clear>
+<span data-icon="trash">
+</span>Limpiar</button>
+<button id="hide-answers">
+<span data-icon="eye-closed">
+</span>Ocultar</button>
+<button id="show-answers">
+<span data-icon="eye">
+</span>Mostrar</button>
+</footer>
+<script type="module" src="./main.js">
+</script>
+</body>
+</html>

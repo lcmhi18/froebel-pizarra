@@ -1,3 +1,4 @@
+import {validWorkshop} from '../boards/taller-aritmetico/engine.js';
 import {validFractionLesson} from '../boards/fracciones/model.js';
 import {validFractionDrawing} from '../boards/fracciones/drawing-model.js';
 import {validNoteImage} from './note-image.js';
@@ -13,6 +14,7 @@ export const BOARD_PERMISSIONS:Record<string,BoardPermissions>={
  prueba:unrestricted,_plantilla:unrestricted,geometria:unrestricted,konva:unrestricted,aritmetica:unrestricted,
  'recta-numerica':{student:{itemTypes:['pin'],operations:['add','update','remove','order','field'],fields:['a','b']},teacherOnlyFields:['note','fs']},
  'operaciones-combinadas':{student:{itemTypes:[],operations:[],fields:[]},teacherOnlyFields:['lesson']},
+ 'taller-aritmetico':{student:{itemTypes:[],operations:[],fields:[]},teacherOnlyFields:['exercise','drawing']},
  fracciones:{student:{itemTypes:[],operations:[],fields:[]},teacherOnlyFields:['lesson','drawing']},
  intervalos:{student:{itemTypes:[],operations:[],fields:[]},teacherOnlyFields:['lesson']},
 };
@@ -27,6 +29,10 @@ export function validNote(value:unknown):boolean{
 }
 /** Called for every authenticated operation, before application or persistence. */
 export function boardOperationError(boardId:string,role:'teacher'|'student',op:Op,state:BoardState):ErrorCode|null{
+ if(boardId==='taller-aritmetico'){
+  if(role!=='teacher')return 'FORBIDDEN';
+  return op.kind==='field'&&((op.field==='exercise'&&validWorkshop(op.value))||(op.field==='drawing'&&validFractionDrawing(op.value)))?null:'BAD_MESSAGE';
+ }
  if(boardId==='fracciones'){
   if(role!=='teacher')return 'FORBIDDEN';
   return op.kind==='field'&&((op.field==='lesson'&&validFractionLesson(op.value))||(op.field==='drawing'&&validFractionDrawing(op.value)))?null:'BAD_MESSAGE';

@@ -14,4 +14,5 @@ export const BOARD_MANIFEST = [
   {id:'operaciones-combinadas',title:'Operaciones combinadas · Álgebra de Primaria',path:'/boards/operaciones-combinadas/',engine:'svg-js',localKeys:['tool','color','theme'],fieldKeys:['lesson'],permissions:BOARD_PERMISSIONS['operaciones-combinadas']},
   {id:'intervalos',title:'Intervalos en ℤ · Álgebra de Primaria',path:'/boards/intervalos/',engine:'svg-js',localKeys:['tool','color','hideUpper','hideLower','largeBoard'],fieldKeys:['lesson'],permissions:BOARD_PERMISSIONS.intervalos},
   {id:'fracciones',title:'Fracciones · Aritmética de Primaria',path:'/boards/fracciones/',engine:'svg-js',localKeys:['tool','color','theme','exam'],fieldKeys:['lesson','drawing'],permissions:BOARD_PERMISSIONS.fracciones},
+  {id:'taller-aritmetico',title:'Taller de Aritmética · Primaria',path:'/boards/taller-aritmetico/',engine:'svg-js',localKeys:['tool','color','exam','largeBoard','hideUpper','hideLower'],fieldKeys:['exercise','drawing'],permissions:BOARD_PERMISSIONS['taller-aritmetico']},
 ] as const;
